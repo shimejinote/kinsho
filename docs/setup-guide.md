@@ -54,7 +54,8 @@ az bicep install
 - Static Web Apps: `eastasia`（**Free SKU は japaneast 非対応**）
 - SWA SKU: `Free`
 - スタンドアロン Functions: **オン**（`dailyMemoryTimeQuota` キルスイッチ付き）。Y1 クォータが 0 の場合はクォータ申請が必要。それまでは `deployStandaloneFunctionApp=false` で SWA マネージド `api/` を使う
-- Cost Management 予算: RG 月次アラート（`alertEmail` 必須、`budgetAmount` 既定 `1`）
+- Cost Management 予算: RG 月次アラート（`alertEmail` 必須、`budgetAmount` 既定 `100` ≈ JPY 100円）
+- Log Analytics: `workspaceCapping.dailyQuotaGb=0.023`（約23MB/日の取り込みハードリミット）
 - linkedBackends: 無効（Free では不可）
 
 ```powershell
@@ -66,7 +67,7 @@ az deployment sub create `
   --template-file infra/main.bicep `
   --parameters infra/main.bicepparam `
     alertEmail='you@example.com' `
-    budgetAmount=1 `
+    budgetAmount=100 `
     dailyMemoryTimeQuota=10000 `
     deployStandaloneFunctionApp=true `
   --query properties.outputs `
@@ -74,7 +75,7 @@ az deployment sub create `
 ```
 
 - `alertEmail` は実在する通知先メールに置き換えてください（必須）。
-- `budgetAmount` の単位はサブスクリプションの請求通貨です。USD 契約なら `1` ≈ $1。JPY 契約で約100円にしたい場合は `budgetAmount=100` を渡します。
+- `budgetAmount` の単位はサブスクリプションの請求通貨です。JPY 契約向けに既定は `100`（約100円）。USD 契約なら `budgetAmount=1` などに下げてください。
 - `dailyMemoryTimeQuota=10000` は日次 GB-s 上限（キルスイッチ）。毎日キャップしても月間無料枠 400,000 GB-s 未満に収まります。
 
 デプロイ後、出力から次を控えます。

@@ -40,9 +40,9 @@ param linkFunctionAppAsBackend bool = false
 @description('Email for Cost Management budget alerts (required)')
 param alertEmail string
 
-@description('Monthly RG budget amount in billing currency units (default 1 ≈ $1 USD)')
+@description('Monthly RG budget amount in billing currency (default 100 ≈ ¥100 on JPY accounts)')
 @minValue(1)
-param budgetAmount int = 1
+param budgetAmount int = 100
 
 @description('Functions daily GB-s kill switch (default 10000 keeps monthly use under free grant)')
 param dailyMemoryTimeQuota int = 10000
@@ -106,8 +106,9 @@ module staticWebApp 'modules/staticWebApp.bicep' = {
     nameSuffix: nameSuffix
     tags: tags
     skuName: staticWebAppSku
-    linkedBackendResourceId: (deployStandaloneFunctionApp && linkFunctionAppAsBackend && staticWebAppSku == 'Standard')
-      ? functionApp.outputs.functionAppId
+    // Safe dereference (.?) clears BCP318 when functionApp module is skipped
+    linkedBackendResourceId: (linkFunctionAppAsBackend && staticWebAppSku == 'Standard')
+      ? (functionApp.?outputs.functionAppId ?? '')
       : ''
     linkedBackendRegion: location
   }
@@ -126,7 +127,7 @@ output resourceGroupName string = rg.name
 output nameSuffix string = nameSuffix
 output staticWebAppName string = staticWebApp.outputs.staticWebAppName
 output staticWebAppHostname string = staticWebApp.outputs.defaultHostname
-output functionAppName string = deployStandaloneFunctionApp ? functionApp.outputs.functionAppName : ''
-output functionAppHostname string = deployStandaloneFunctionApp ? functionApp.outputs.functionAppDefaultHostname : ''
+output functionAppName string = functionApp.?outputs.functionAppName ?? ''
+output functionAppHostname string = functionApp.?outputs.functionAppDefaultHostname ?? ''
 output applicationInsightsId string = monitoring.outputs.applicationInsightsId
 output budgetName string = budget.outputs.budgetName

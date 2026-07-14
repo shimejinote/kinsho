@@ -13,6 +13,9 @@ param logAnalyticsWorkspaceName string = 'log-kinsho-${nameSuffix}'
 @description('Application Insights name')
 param applicationInsightsName string = 'appi-kinsho-${nameSuffix}'
 
+// ~23 MB/day hard cap. Float via json() — Bicep integer-only literals cannot express 0.023.
+var logAnalyticsDailyQuotaGb = json('0.023')
+
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: logAnalyticsWorkspaceName
   location: location
@@ -22,6 +25,9 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
       name: 'PerGB2018'
     }
     retentionInDays: 30
+    workspaceCapping: {
+      dailyQuotaGb: logAnalyticsDailyQuotaGb
+    }
     features: {
       enableLogAccessUsingOnlyResourcePermissions: true
     }

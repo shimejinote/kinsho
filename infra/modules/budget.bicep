@@ -1,9 +1,9 @@
 @description('Budget display name')
 param budgetName string = 'budget-kinsho'
 
-@description('Monthly cost cap (billing currency units). Default 1 ≈ $1 USD on USD billing accounts.')
+@description('Monthly cost cap (billing currency). Default 100 ≈ ¥100 on JPY accounts.')
 @minValue(1)
-param budgetAmount int = 1
+param budgetAmount int = 100
 
 @description('Email for budget threshold notifications')
 param alertEmail string
