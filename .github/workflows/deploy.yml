@@ -1,0 +1,86 @@
+name: Deploy (OIDC)
+
+# Single pipeline: Bicep (RG scope) + Next.js static export + SWA managed API.
+# Auth: Entra ID federated credentials (OIDC) — no Azure client secret stored in GitHub.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AZURE_RESOURCE_GROUP: rg-kinsho
+  BICEP_FILE: infra/resources.bicep
+  BICEP_PARAMS: infra/resources.bicepparam
+  NODE_VERSION: '20'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy infrastructure (Bicep)
+        uses: azure/arm-deploy@v2
+        with:
+          scope: resourcegroup
+          resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP }}
+          deploymentName: kinsho-resources
+          template: ${{ env.BICEP_FILE }}
+          parameters: ${{ env.BICEP_PARAMS }}
+          failOnStdErr: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: |
+            web/package-lock.json
+            api/package-lock.json
+
+      - name: Install & build Next.js (static export)
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+
+      - name: Resolve Static Web Apps deploy token via OIDC
+        id: swa
+        run: |
+          set -euo pipefail
+          SWA_NAME="$(az staticwebapp list -g "${AZURE_RESOURCE_GROUP}" --query "[0].name" -o tsv)"
+          if [ -z "${SWA_NAME}" ]; then
+            echo "No Static Web App found in ${AZURE_RESOURCE_GROUP}" >&2
+            exit 1
+          fi
+          API_TOKEN="$(az staticwebapp secrets list -n "${SWA_NAME}" -g "${AZURE_RESOURCE_GROUP}" --query "properties.apiKey" -o tsv)"
+          echo "::add-mask::${API_TOKEN}"
+          {
+            echo "name=${SWA_NAME}"
+            echo "api_token=${API_TOKEN}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ steps.swa.outputs.api_token }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: web/out
+          api_location: api
+          skip_app_build: true
+          api_build_command: npm ci && npm run build
+          output_location: ''

@@ -1,20 +1,18 @@
-name: Deploy Static Web App + managed API
+name: Deploy Static Web App + managed API (legacy)
 
-# Deploys frontend (web/ → static export) and Free-tier managed Functions (api/).
+# Push deploys moved to deploy.yml (OIDC). Keep PR staging close + manual runs here.
 
 on:
-  push:
-    branches: [main]
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches: [main]
   workflow_dispatch:
 
 jobs:
-  build_and_deploy:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed') || github.event_name == 'workflow_dispatch'
+  build_and_deploy_pr:
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
     runs-on: ubuntu-latest
-    name: Build and Deploy
+    name: Build and Deploy (PR)
     steps:
       - uses: actions/checkout@v4
         with:
@@ -58,3 +56,29 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           action: close
+
+  manual_legacy:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    name: Manual legacy deploy
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: |
+            web/package-lock.json
+            api/package-lock.json
+      - working-directory: web
+        run: npm ci && npm run build
+      - uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          app_location: web/out
+          api_location: api
+          skip_app_build: true
+          api_build_command: npm ci && npm run build
+          output_location: ''
