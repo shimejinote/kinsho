@@ -8,8 +8,7 @@ param staticWebAppSku = 'Free'
 param alertEmail = 'egaty@nifty.com'
 param budgetAmount = 1
 param dailyMemoryTimeQuota = 10000
-// Standalone Consumption Functions with dailyMemoryTimeQuota kill switch.
-// If Y1/Dynamic quota is 0, request quota increase or set deployStandaloneFunctionApp=false
-// and use SWA Free managed API (repo api/) instead.
-param deployStandaloneFunctionApp = true
+// Y1/Dynamic quota is currently 0 on this subscription — keep false until quota is granted.
+// SWA Free managed API (repo api/) remains the live backend. Kill switch applies only to standalone FA.
+param deployStandaloneFunctionApp = false
 param linkFunctionAppAsBackend = false
