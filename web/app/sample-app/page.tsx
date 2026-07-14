@@ -10,11 +10,6 @@ type HealthResponse = {
 
 /**
  * Demonstrates calling the shared Azure Functions backend.
- *
- * Free SWA + managed API: relative `/api/health` (deployed from repo `api/`).
- * Free SWA + separate Consumption Function App: set NEXT_PUBLIC_API_BASE_URL
- * to `https://<func>.azurewebsites.net` (CORS must allow the SWA origin).
- * Standard SWA + linkedBackends: relative `/api/health` via linked Function App.
  */
 export default function SampleAppPage() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
@@ -37,35 +32,73 @@ export default function SampleAppPage() {
       });
   }, []);
 
+  const state = error ? 'error' : health ? 'ok' : 'loading';
+
   return (
-    <section className="mx-auto max-w-md space-y-4">
-      <p className="text-sm leading-relaxed text-emerald-100/70">
-        このページは他アプリと UI を共有しません。新規アプリは{' '}
-        <code className="rounded bg-black/30 px-1.5 py-0.5 text-emerald-300">
+    <article className="space-y-10">
+      <p className="rise rise-delay-2 text-[15px] leading-[1.9] text-[var(--ink-soft)] sm:text-base">
+        このページは Note のような読み心地を軸に、わずかに近未来の空気を足したサンプルです。
+        新しい SPA を増やすときは{' '}
+        <code className="rounded-sm bg-[color-mix(in_srgb,var(--note)_12%,transparent)] px-1.5 py-0.5 font-[family-name:var(--font-sans)] text-[0.9em] text-[var(--note-deep)]">
           app/&lt;app-name&gt;/
         </code>{' '}
-        を複製して追加してください。
+        を複製し、そのフォルダだけで UI を完結させてください。
       </p>
 
-      <div className="rounded-lg border border-emerald-800/50 bg-black/20 p-4">
-        <h2 className="text-sm font-medium text-emerald-400">API health</h2>
+      <section
+        className="rise rise-delay-3 border-t border-[var(--line)] pt-8"
+        aria-live="polite"
+      >
+        <div className="flex items-center gap-2.5">
+          <span className="status-dot" data-state={state} aria-hidden />
+          <h2 className="font-[family-name:var(--font-display)] text-lg tracking-wide text-[var(--ink)]">
+            API の合図
+          </h2>
+        </div>
+
+        <p className="mt-2 text-sm text-[var(--muted)]">
+          共有バックエンド <span className="text-[var(--ink-soft)]">/api/health</span>{' '}
+          の応答です。
+        </p>
+
         {error && (
-          <p className="mt-2 text-sm text-red-300">
-            呼び出し失敗: {error}
-            <span className="mt-1 block text-xs text-emerald-100/50">
-              ローカルでは SWA CLI、または Functions を起動してください。
-            </span>
+          <p className="mt-5 text-sm leading-relaxed text-[#a84343]">
+            呼び出しに失敗しました（{error}）。
+            ローカルでは SWA CLI か Functions を起動してください。
           </p>
         )}
+
         {health && (
-          <pre className="mt-2 overflow-x-auto text-xs text-emerald-100/90">
-            {JSON.stringify(health, null, 2)}
-          </pre>
+          <dl className="mt-6 grid gap-4 sm:grid-cols-3">
+            <div>
+              <dt className="text-[11px] tracking-[0.2em] text-[var(--muted)] uppercase">
+                status
+              </dt>
+              <dd className="mt-1 font-[family-name:var(--font-display)] text-xl text-[var(--note-deep)]">
+                {health.status}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[11px] tracking-[0.2em] text-[var(--muted)] uppercase">
+                service
+              </dt>
+              <dd className="mt-1 text-[15px] text-[var(--ink)]">{health.service}</dd>
+            </div>
+            <div>
+              <dt className="text-[11px] tracking-[0.2em] text-[var(--muted)] uppercase">
+                timestamp
+              </dt>
+              <dd className="mt-1 font-mono text-xs text-[var(--ink-soft)] sm:text-sm">
+                {new Date(health.timestamp).toLocaleString('ja-JP')}
+              </dd>
+            </div>
+          </dl>
         )}
+
         {!health && !error && (
-          <p className="mt-2 text-sm text-emerald-100/50">読み込み中…</p>
+          <p className="mt-5 text-sm text-[var(--muted)]">信号を待っています…</p>
         )}
-      </div>
-    </section>
+      </section>
+    </article>
   );
 }

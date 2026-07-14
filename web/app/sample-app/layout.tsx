@@ -6,19 +6,24 @@ export const metadata: Metadata = {
 };
 
 /**
- * App-local layout: completely independent UI surface.
- * Duplicate this folder pattern for each new SPA (app/<app-name>/).
+ * App-local layout: Note-like reading surface, fully independent from host chrome.
  */
 export default function SampleAppLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-dvh bg-[#121a14] text-[#e7f0ea]">
-      <header className="border-b border-emerald-900/60 px-6 py-4">
-        <p className="text-xs tracking-[0.25em] text-emerald-500/80 uppercase">
+    <div className="atmosphere min-h-dvh">
+      <header className="mx-auto max-w-2xl px-6 pt-14 pb-2 sm:px-8">
+        <p className="rise text-[11px] tracking-[0.28em] text-[var(--muted)] uppercase">
           sample-app
         </p>
-        <h1 className="text-xl font-medium">独立 SPA サンプル</h1>
+        <h1 className="rise rise-delay-1 mt-3 font-[family-name:var(--font-display)] text-[clamp(1.85rem,5vw,2.75rem)] leading-snug font-medium tracking-tight text-[var(--ink)]">
+          独立した一冊のはじまり
+        </h1>
+        <p className="rise rise-delay-2 mt-3 text-sm text-[var(--muted)]">
+          kinsho 上のサンプル · UI は他アプリと共有しません
+        </p>
+        <div className="rule mt-8" />
       </header>
-      <div className="px-6 py-8">{children}</div>
+      <div className="mx-auto max-w-2xl px-6 pt-8 pb-20 sm:px-8">{children}</div>
     </div>
   );
 }

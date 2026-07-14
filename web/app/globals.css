@@ -1,10 +1,46 @@
 @import 'tailwindcss';
 
 :root {
-  --kinsho-bg: #0f1419;
-  --kinsho-fg: #e8eef4;
-  --kinsho-muted: #8b9aab;
-  --kinsho-accent: #3d9b7a;
+  --paper: #f4f7f5;
+  --paper-deep: #e8efeb;
+  --ink: #161a18;
+  --ink-soft: #3d4541;
+  --muted: #7a847e;
+  --note: #00a381;
+  --note-deep: #00856b;
+  --line: color-mix(in srgb, var(--ink) 10%, transparent);
+  --font-display: var(--font-shippori), 'Hiragino Mincho ProN', serif;
+  --font-sans: var(--font-zen), 'Hiragino Sans', sans-serif;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rule-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 html,
@@ -14,7 +50,103 @@ body {
 
 body {
   margin: 0;
-  background: var(--kinsho-bg);
-  color: var(--kinsho-fg);
-  font-family: 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: var(--font-sans);
+  font-feature-settings: 'palt' 1;
+}
+
+.atmosphere {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 80% at 8% -10%, rgba(0, 163, 129, 0.14), transparent 55%),
+    radial-gradient(90% 70% at 100% 0%, rgba(120, 160, 190, 0.12), transparent 50%),
+    linear-gradient(180deg, #fbfcfb 0%, var(--paper) 45%, var(--paper-deep) 100%);
+}
+
+.atmosphere::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+}
+
+.atmosphere::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.atmosphere > * {
+  position: relative;
+  z-index: 1;
+}
+
+.rise {
+  animation: rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.rise-delay-1 {
+  animation-delay: 0.12s;
+}
+
+.rise-delay-2 {
+  animation-delay: 0.24s;
+}
+
+.rise-delay-3 {
+  animation-delay: 0.36s;
+}
+
+.rule {
+  height: 1px;
+  background: var(--ink);
+  opacity: 0.12;
+  transform-origin: left center;
+  animation: rule-grow 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}
+
+.note-link {
+  color: var(--note-deep);
+  text-decoration: none;
+  background-image: linear-gradient(currentColor, currentColor);
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 0 1px;
+  transition: background-size 0.35s ease, color 0.2s ease;
+}
+
+.note-link:hover {
+  color: var(--note);
+  background-size: 100% 1px;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--note);
+  animation: pulse-dot 2.2s ease-in-out infinite;
+}
+
+.status-dot[data-state='error'] {
+  background: #c45c5c;
+  animation: none;
+}
+
+.status-dot[data-state='loading'] {
+  background: var(--muted);
 }
