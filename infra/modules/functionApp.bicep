@@ -25,6 +25,18 @@ param applicationInsightsConnectionString string
 @description('Node.js version for Functions runtime (Windows Consumption)')
 param nodeVersion string = '~20'
 
+@description('''
+Daily GB-s quota for Consumption Functions (kill switch).
+Default 10000 keeps monthly use under free grant (10000 × 31 = 310000 < 400000).
+''')
+param dailyMemoryTimeQuota int = 10000
+
+@description('CORS allowed origins (localhost + optional SWA hostname via CLI/param)')
+param corsAllowedOrigins array = [
+  'http://localhost:4280'
+  'http://localhost:3000'
+]
+
 var storageBlobConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value}'
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' = {
@@ -65,16 +77,14 @@ resource functionApp 'Microsoft.Web/sites@2023-12-01' = {
   properties: {
     serverFarmId: hostingPlan.id
     httpsOnly: true
+    dailyMemoryTimeQuota: dailyMemoryTimeQuota
     siteConfig: {
       netFrameworkVersion: 'v4.0'
       powerShellVersion: ''
       ftpsState: 'Disabled'
       minTlsVersion: '1.2'
       cors: {
-        allowedOrigins: [
-          'http://localhost:4280'
-          'http://localhost:3000'
-        ]
+        allowedOrigins: corsAllowedOrigins
         supportCredentials: false
       }
       appSettings: [

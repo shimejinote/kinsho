@@ -53,7 +53,8 @@ az bicep install
 - Functions / 監視: `japaneast`
 - Static Web Apps: `eastasia`（**Free SKU は japaneast 非対応**）
 - SWA SKU: `Free`
-- スタンドアロン Functions: 既定ではオフ（サブスクリプションの Y1 クォータが 0 の場合があるため）。API は SWA マネージド `api/` を使用
+- スタンドアロン Functions: **オン**（`dailyMemoryTimeQuota` キルスイッチ付き）。Y1 クォータが 0 の場合はクォータ申請が必要。それまでは `deployStandaloneFunctionApp=false` で SWA マネージド `api/` を使う
+- Cost Management 予算: RG 月次アラート（`alertEmail` 必須、`budgetAmount` 既定 `1`）
 - linkedBackends: 無効（Free では不可）
 
 ```powershell
@@ -64,9 +65,17 @@ az deployment sub create `
   --location japaneast `
   --template-file infra/main.bicep `
   --parameters infra/main.bicepparam `
+    alertEmail='you@example.com' `
+    budgetAmount=1 `
+    dailyMemoryTimeQuota=10000 `
+    deployStandaloneFunctionApp=true `
   --query properties.outputs `
   -o json
 ```
+
+- `alertEmail` は実在する通知先メールに置き換えてください（必須）。
+- `budgetAmount` の単位はサブスクリプションの請求通貨です。USD 契約なら `1` ≈ $1。JPY 契約で約100円にしたい場合は `budgetAmount=100` を渡します。
+- `dailyMemoryTimeQuota=10000` は日次 GB-s 上限（キルスイッチ）。毎日キャップしても月間無料枠 400,000 GB-s 未満に収まります。
 
 デプロイ後、出力から次を控えます。
 
@@ -75,6 +84,7 @@ az deployment sub create `
 | `staticWebAppName` | デプロイ トークン取得 |
 | `staticWebAppHostname` | 公開 URL |
 | `functionAppName` | BYO Functions デプロイ用 |
+| `budgetName` | Cost Management 予算 |
 
 リソース確認:
 
@@ -85,9 +95,10 @@ az resource list -g rg-kinsho -o table
 作成される主なリソース:
 
 - `Microsoft.Web/staticSites` — Static Web Apps (Free)
-- `Microsoft.Web/sites` + `serverfarms` (Y1) — Functions Consumption
+- `Microsoft.Web/sites` + `serverfarms` (Y1) — Functions Consumption（`dailyMemoryTimeQuota`）
 - `Microsoft.Storage/storageAccounts` — Functions 必須ストレージ
 - `Microsoft.OperationalInsights/workspaces` + `Microsoft.Insights/components` — 監視
+- `Microsoft.Consumption/budgets` — RG 月次予算アラート
 
 ### （任意）Standard + linkedBackends
 
@@ -278,12 +289,12 @@ web/app/<new-app>/
 | リソース | 目安 |
 |----------|------|
 | SWA Free | $0（帯域・サイズ上限あり） |
-| Functions Consumption | 実行に応じた従量（月間無料枠あり） |
+| Functions Consumption | 実行に応じた従量（月間無料枠あり）。`dailyMemoryTimeQuota=10000` で日次キルスイッチ |
 | Storage Standard_LRS | 僅少 |
 | Log Analytics | 取り込み従量（保持 30 日設定済み） |
+| Cost Management Budget | RG 月次キャップ（既定 1）。50% / 80% / 100% Actual + 100% Forecasted で `alertEmail` に通知 |
 
-マネージド API だけ使う場合でも、Bicep は BYO 用 Function App を作成します。不要なら `infra/main.bicep` から `functionApp` モジュール呼び出しを外してさらに単純化できます。
-
+マネージド API だけ使う場合は `deployStandaloneFunctionApp=false` を渡してください。Y1 クォータ未付与のサブスクリプションでは Functions 作成が失敗します。
 ---
 
 ## トラブルシュート
