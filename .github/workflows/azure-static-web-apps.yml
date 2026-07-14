@@ -1,0 +1,73 @@
+name: Deploy Static Web App + managed API
+
+# Deploys frontend (web/ → static export) and the Free-tier compatible
+# managed Functions API (api/). This is the lowest-cost default path.
+#
+# The separate Consumption Function App created by Bicep is deployed by
+# deploy-functions.yml when you choose the BYO Functions model.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build_and_deploy:
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    name: Build and Deploy
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+          lfs: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: |
+            web/package-lock.json
+            api/package-lock.json
+
+      - name: Install & build web (static export)
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+
+      - name: Install & build API
+        working-directory: api
+        run: |
+          npm ci
+          npm run build
+          # Oryx API build often skips TypeScript; ship a ready-to-run package instead
+          npm prune --omit=dev
+
+      - name: Deploy to Azure Static Web Apps
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          # Pre-built static export + pre-built Functions package
+          app_location: web/out
+          api_location: api
+          skip_app_build: true
+          skip_api_build: true
+          output_location: ''
+
+  close_pull_request:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    name: Close Pull Request
+    steps:
+      - name: Close staging environment
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: close

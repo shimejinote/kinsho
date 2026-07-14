@@ -1,0 +1,20 @@
+@import 'tailwindcss';
+
+:root {
+  --kinsho-bg: #0f1419;
+  --kinsho-fg: #e8eef4;
+  --kinsho-muted: #8b9aab;
+  --kinsho-accent: #3d9b7a;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--kinsho-bg);
+  color: var(--kinsho-fg);
+  font-family: 'Segoe UI', 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+}

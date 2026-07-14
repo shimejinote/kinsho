@@ -1,0 +1,16 @@
+# Azure Functions local settings template
+# Copy to local.settings.json (gitignored) and adjust as needed.
+
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "FUNCTIONS_EXTENSION_VERSION": "~4"
+  },
+  "Host": {
+    "LocalHttpPort": 7071,
+    "CORS": "http://localhost:3000,http://localhost:4280",
+    "CORSCredentials": false
+  }
+}

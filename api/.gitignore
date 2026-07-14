@@ -1,0 +1,13 @@
+# Dependencies
+node_modules
+dist
+
+# Azure Functions
+local.settings.json
+.python_packages
+__pycache__
+.venv
+
+# OS / IDE
+.DS_Store
+.vscode

@@ -1,0 +1,10 @@
+
+# Azure Functions package ignore
+*.ts
+!dist/**/*.js
+.git*
+.vscode
+local.settings.json
+local.settings.json.example
+tsconfig.json
+*.md
