@@ -16,7 +16,7 @@ Functions Consumption のクォータが取れなくても、**課金爆発**と
 - スキャナ用パス（`.env` / `.git` / `wp-admin` 等）を 404
 - CSP / Frame 拒否などのセキュリティヘッダ
 - `/api/health` を IP あたり **20 req/分** に制限（429）
-- `robots.txt` で `/api/` を Disallow
+- `robots.ts` で主要 AI クローラーを `Disallow: /`、一般クローラーは許可（`/api/` のみ禁止）
 - ヘルスの詳細ログを抑制（取り込み節約）
 
 ## それでも足りないとき（無料で強い）
