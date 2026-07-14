@@ -4,13 +4,9 @@ name: Deploy Consumption Function App (BYO)
 # (NEXT_PUBLIC_API_BASE_URL) or after upgrading SWA to Standard + linkedBackends.
 # Skip this workflow if you only use SWA managed API (api/ via azure-static-web-apps.yml).
 
+# Manual only: needs OIDC secrets + AZURE_FUNCTIONAPP_NAME, and App Service Y1 quota.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'api/**'
-      - '.github/workflows/deploy-functions.yml'
 
 permissions:
   id-token: write

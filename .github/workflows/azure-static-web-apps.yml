@@ -1,10 +1,6 @@
 name: Deploy Static Web App + managed API
 
-# Deploys frontend (web/ → static export) and the Free-tier compatible
-# managed Functions API (api/). This is the lowest-cost default path.
-#
-# The separate Consumption Function App created by Bicep is deployed by
-# deploy-functions.yml when you choose the BYO Functions model.
+# Deploys frontend (web/ → static export) and Free-tier managed Functions (api/).
 
 on:
   push:
@@ -40,25 +36,16 @@ jobs:
           npm ci
           npm run build
 
-      - name: Install & build API
-        working-directory: api
-        run: |
-          npm ci
-          npm run build
-          # Oryx API build often skips TypeScript; ship a ready-to-run package instead
-          npm prune --omit=dev
-
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: upload
-          # Pre-built static export + pre-built Functions package
           app_location: web/out
           api_location: api
           skip_app_build: true
-          skip_api_build: true
+          api_build_command: npm ci && npm run build
           output_location: ''
 
   close_pull_request:

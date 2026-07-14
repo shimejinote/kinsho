@@ -1,12 +1,8 @@
 name: Deploy infrastructure (Bicep)
 
+# Manual only until Azure OIDC secrets (AZURE_CLIENT_ID/TENANT_ID/SUBSCRIPTION_ID) are configured.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'infra/**'
-      - '.github/workflows/infra.yml'
 
 permissions:
   id-token: write

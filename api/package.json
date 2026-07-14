@@ -12,11 +12,11 @@
     "prestart": "npm run build"
   },
   "dependencies": {
-    "@azure/functions": "^4.7.0"
+    "@azure/functions": "^4.7.0",
+    "typescript": "^5.8.0"
   },
   "devDependencies": {
-    "@types/node": "^22.13.0",
-    "typescript": "^5.8.0"
+    "@types/node": "^22.13.0"
   },
   "engines": {
     "node": ">=20"

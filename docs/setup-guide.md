@@ -50,8 +50,10 @@ az bicep install
 既定パラメータ（`infra/main.bicepparam`）:
 
 - リソースグループ: `rg-kinsho`
-- リージョン: `japaneast`
+- Functions / 監視: `japaneast`
+- Static Web Apps: `eastasia`（**Free SKU は japaneast 非対応**）
 - SWA SKU: `Free`
+- スタンドアロン Functions: 既定ではオフ（サブスクリプションの Y1 クォータが 0 の場合があるため）。API は SWA マネージド `api/` を使用
 - linkedBackends: 無効（Free では不可）
 
 ```powershell
