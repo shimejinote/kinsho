@@ -65,6 +65,18 @@
       }
     },
     {
+      "route": "/apps/*",
+      "rewrite": "/apps/index.html"
+    },
+    {
+      "route": "/archive/void/*",
+      "rewrite": "/archive/void/index.html"
+    },
+    {
+      "route": "/archive/journey/*",
+      "rewrite": "/archive/journey/index.html"
+    },
+    {
       "route": "/sample-app/*",
       "rewrite": "/sample-app/index.html"
     }
