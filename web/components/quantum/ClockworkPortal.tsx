@@ -1,16 +1,21 @@
 'use client';
 
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
-import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import {
   getCycleBoost,
   getGlow,
   getSuction,
+  isWarpAutoPlaying,
+  isWarpBusy,
   resetSuction,
   setSuctionHolding,
+  triggerWarpPlayback,
 } from './suctionInput';
+
+/** Pointer hold shorter than this → one-click auto ritual (not a cancelable long-press). */
+const CLICK_MS = 280;
 
 /** ~500円玉 */
 const SCALE = 0.3;
@@ -25,14 +30,14 @@ void main() {
 
 /**
  * Void seal — frame/ring light preserved.
- * Inside: maelstrom — UV sucked inward along a log spiral (seamless).
+ * Idle: maelstrom core. Long-press: opens as a dimensional warp gate.
  */
 const frag = /* glsl */ `
 precision highp float;
 varying vec2 vUv;
 uniform float uTime;
 uniform float uHover;
-uniform float uSuck; // 0..1 long-press drain — amps the inner vortex
+uniform float uSuck; // 0..1 long-press — opens the dimensional aperture
 
 void main() {
   vec2 p = vUv * 2.0 - 1.0;
@@ -49,7 +54,7 @@ void main() {
   float swirlZone = smoothstep(0.5, 0.4, r0) * smoothstep(0.0, 0.1, r0);
   float spin = uTime * (0.85 + uHover * 0.7 + boost * 2.2);
 
-  // --- Maelstrom warp (harder while sucking) ---
+  // --- Dimensional aperture (deepens while warping) ---
   float pull = pow(smoothstep(0.48, 0.0, r0), 1.35) * (1.0 + boost * 0.8);
   float twist = (1.8 + 4.5 * pull + boost * 5.0) * spin * 0.35;
   float r = r0 + pull * (0.12 + boost * 0.08) * sin(ang0 * 4.0 - spin * 2.0);
@@ -75,31 +80,47 @@ void main() {
   float core = 1.0 - smoothstep(0.18, 0.34, r0);
   core = max(core, maelstrom * 0.9 + drain * 0.85);
 
-  float ringR = 0.48;
+  float ringR = mix(0.48, 0.44, boost);
   float ring = exp(-pow((r0 - ringR) * 38.0, 2.0));
   float travel = 0.55 + 0.45 * sin(ang0 * 2.0 - uTime * (1.4 + boost * 1.2));
-  vec3 ringCol = vec3(0.92, 0.58, 0.22) * ring * (0.65 + 0.5 * travel);
-  ringCol += vec3(1.0, 0.85, 0.55) * pow(ring, 1.8) * travel * (0.55 + boost * 0.25);
+
+  // Idle warm brass → warp: cool rift rim (other-dimension gate)
+  vec3 ringWarm = vec3(0.92, 0.58, 0.22);
+  vec3 ringRift = vec3(0.45, 0.72, 1.0);
+  vec3 ringCol = mix(ringWarm, ringRift, boost * 0.85) * ring * (0.65 + 0.5 * travel);
+  ringCol += mix(vec3(1.0, 0.85, 0.55), vec3(0.85, 0.7, 1.0), boost)
+    * pow(ring, 1.8) * travel * (0.55 + boost * 0.35);
 
   float lip = exp(-pow((r0 - 0.36) * 28.0, 2.0)) * 0.35;
   lip *= 1.0 - swirlZone * grooves * (0.35 + boost * 0.25);
-  vec3 lipCol = vec3(0.55, 0.28, 0.08) * lip;
+  vec3 lipCol = mix(vec3(0.55, 0.28, 0.08), vec3(0.2, 0.12, 0.35), boost) * lip;
 
-  float halo = exp(-pow((r0 - 0.55) * 8.0, 2.0)) * (0.12 + 0.1 * uHover + boost * 0.1);
-  vec3 haloCol = vec3(0.7, 0.35, 0.1) * halo;
+  float halo = exp(-pow((r0 - 0.55) * 8.0, 2.0)) * (0.12 + 0.1 * uHover + boost * 0.18);
+  vec3 haloCol = mix(vec3(0.7, 0.35, 0.1), vec3(0.35, 0.25, 0.75), boost) * halo;
 
   float orbit2 = exp(-pow((r0 - 0.58) * 22.0, 2.0)) * 0.2;
   orbit2 *= 0.5 + 0.5 * sin(ang0 * 3.0 + uTime * 0.7);
-  vec3 orbitCol = vec3(0.85, 0.5, 0.18) * orbit2;
+  vec3 orbitCol = mix(vec3(0.85, 0.5, 0.18), vec3(0.5, 0.55, 1.0), boost) * orbit2;
+
+  // Outer keep-out corona — claims space so the star clear zone reads as portal aura
+  float corona = exp(-pow((r0 - 0.72) * 6.0, 2.0)) * boost * 0.55;
+  vec3 coronaCol = vec3(0.25, 0.35, 0.85) * corona;
+  coronaCol += vec3(0.55, 0.35, 0.95) * pow(corona, 1.5) * 0.6;
 
   float trough = (1.0 - grooves) * swirlZone;
-  vec3 bruise = vec3(0.045, 0.012, 0.01) * trough;
-  bruise += vec3(0.1, 0.02, 0.015) * tiers * swirlZone * (0.4 + boost * 0.35);
+  vec3 bruise = mix(vec3(0.045, 0.012, 0.01), vec3(0.02, 0.015, 0.06), boost) * trough;
+  bruise += mix(vec3(0.1, 0.02, 0.015), vec3(0.08, 0.04, 0.18), boost)
+    * tiers * swirlZone * (0.4 + boost * 0.35);
   float ridge = smoothstep(0.35, 0.75, grooves) * (1.0 - drain);
   bruise += vec3(0.14, 0.05, 0.02) * ridge * swirlZone * (0.25 + boost * 0.2);
 
-  vec3 col = bruise;
-  col += lipCol + ringCol + haloCol + orbitCol;
+  // Deep void aperture — reads as other space beyond the seal
+  float aperture = pow(smoothstep(0.42, 0.0, r0), 1.4) * (0.55 + boost * 0.7);
+  vec3 beyond = vec3(0.02, 0.03, 0.08) * aperture;
+  beyond += vec3(0.12, 0.05, 0.28) * aperture * boost * (0.4 + 0.6 * grooves);
+
+  vec3 col = bruise + beyond;
+  col += lipCol + ringCol + haloCol + orbitCol + coronaCol;
 
   col *= 1.0 - core * (0.97 + boost * 0.02);
   col *= 1.0 - maelstrom * (0.75 + drain * 0.35 + boost * 0.15);
@@ -107,8 +128,9 @@ void main() {
 
   float alpha = max(core * 0.98, ring * 1.4 + lip + halo * 1.2 + orbit2);
   alpha = max(alpha, swirlZone * (0.88 + maelstrom * 0.2));
+  alpha = max(alpha, corona * 1.1 + aperture * 0.35 * boost);
   alpha *= veil;
-  alpha = clamp(alpha * (0.85 + 0.2 * uHover), 0.0, 1.0);
+  alpha = clamp(alpha * (0.85 + 0.2 * uHover + boost * 0.12), 0.0, 1.0);
 
   gl_FragColor = vec4(col, alpha);
 }
@@ -121,14 +143,16 @@ type Props = {
 
 /**
  * Void portal button.
- * Long-press: dust is sucked in. Short tap: navigate to /apps.
+ * Click/tap: play full warp ritual once (suck → A+E flash → restore).
+ * Long-press: same suck while held; release before commit cancels.
  */
 export default function ClockworkPortal({ interactive = true }: Props) {
-  const router = useRouter();
   const group = useRef<THREE.Group>(null);
   const mat = useRef<THREE.ShaderMaterial>(null);
   const hover = useRef(0);
   const holding = useRef(false);
+  /** True only for a press that started suction (guards double pointerup). */
+  const activePress = useRef(false);
   const downAt = useRef(0);
   const [hovered, setHovered] = useState(false);
 
@@ -145,8 +169,13 @@ export default function ClockworkPortal({ interactive = true }: Props) {
     if (!interactive) return;
     resetSuction();
     const endHold = () => {
+      // Clear long-press drive immediately. Defer arm clear so the portal's
+      // onPointerUp can still claim a short click in the same release.
       holding.current = false;
       setSuctionHolding(false);
+      queueMicrotask(() => {
+        activePress.current = false;
+      });
     };
     window.addEventListener('pointerup', endHold);
     window.addEventListener('blur', endHold);
@@ -162,15 +191,19 @@ export default function ClockworkPortal({ interactive = true }: Props) {
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.05);
     const suck = getSuction();
-    const pressBoost = holding.current || suck > 0.02 ? 1 : 0;
+    const auto = isWarpAutoPlaying();
+    const pressBoost = holding.current || auto || suck > 0.02 ? 1 : 0;
     hover.current +=
-      ((hovered || holding.current || suck > 0.02 ? 1 : 0) - hover.current) *
+      ((hovered || holding.current || auto || suck > 0.02 ? 1 : 0) -
+        hover.current) *
       (1 - Math.pow(0.001, dt));
 
     if (group.current) {
-      const s = SCALE * (1 + hover.current * 0.08 + pressBoost * 0.04);
+      const s =
+        SCALE *
+        (1 + hover.current * 0.08 + pressBoost * 0.04 + suck * 0.22);
       group.current.scale.setScalar(
-        THREE.MathUtils.lerp(group.current.scale.x || s, s, 0.14),
+        THREE.MathUtils.lerp(group.current.scale.x || s, s, 0.12),
       );
     }
 
@@ -189,7 +222,8 @@ export default function ClockworkPortal({ interactive = true }: Props) {
     }
 
     if (interactive) {
-      document.body.style.cursor = hovered || holding.current ? 'pointer' : '';
+      document.body.style.cursor =
+        hovered || holding.current || auto ? 'pointer' : '';
     }
   });
 
@@ -202,6 +236,9 @@ export default function ClockworkPortal({ interactive = true }: Props) {
           ? (e: ThreeEvent<PointerEvent>) => {
               e.stopPropagation();
               e.nativeEvent.preventDefault();
+              // Ignore while a ritual is already playing (debounce / double-fire).
+              if (isWarpBusy()) return;
+              activePress.current = true;
               holding.current = true;
               downAt.current = performance.now();
               setSuctionHolding(true);
@@ -212,10 +249,14 @@ export default function ClockworkPortal({ interactive = true }: Props) {
         interactive
           ? (e: ThreeEvent<PointerEvent>) => {
               e.stopPropagation();
+              if (!activePress.current) return;
               const held = performance.now() - downAt.current;
+              activePress.current = false;
               holding.current = false;
               setSuctionHolding(false);
-              if (held < 280) router.push('/apps/');
+              // Short click/tap → one-shot full ritual (survives release).
+              // Longer press that releases early still cancels via holding=false.
+              if (held < CLICK_MS) triggerWarpPlayback();
             }
           : undefined
       }

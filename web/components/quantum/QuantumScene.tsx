@@ -4,10 +4,17 @@ import { Canvas } from '@react-three/fiber';
 import { Suspense } from 'react';
 import * as THREE from 'three';
 import ClockworkPortal from './ClockworkPortal';
+import CrossingFlash from './CrossingFlash';
+import DimensionalRift from './DimensionalRift';
 import ParticleSwarm from './ParticleSwarm';
+import WarpCamera from './WarpCamera';
+import WarpVignette from './WarpVignette';
+import WarpWind from './WarpWind';
 
 /**
- * Dust field + real 3D clockwork portal (env-mapped gears + vortex core).
+ * Dust field + void portal. Click once or long-press for dimensional warp
+ * immersion (camera dolly, vignette, rim wind-cut, star streaks,
+ * precursor rift membrane, A+E flash).
  */
 export default function QuantumScene() {
   return (
@@ -21,15 +28,21 @@ export default function QuantumScene() {
           alpha: false,
         }}
         style={{ touchAction: 'none' }}
-        onCreated={({ gl }) => {
+        onCreated={({ gl, camera }) => {
           gl.toneMapping = THREE.ACESFilmicToneMapping;
           gl.toneMappingExposure = 0.82;
+          camera.lookAt(0, 0, 0);
         }}
       >
         <color attach="background" args={['#030308']} />
         <Suspense fallback={null}>
+          <WarpCamera />
           <ParticleSwarm />
+          <WarpWind />
           <ClockworkPortal />
+          <WarpVignette />
+          <DimensionalRift />
+          <CrossingFlash />
         </Suspense>
       </Canvas>
     </div>
