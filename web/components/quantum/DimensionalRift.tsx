@@ -66,19 +66,21 @@ void main() {
     0.82 + 0.18 * sin(uTime * 4.2 + r * 3.0 + rift * 2.0);
 
   float a =
-    (core * 0.5 + sheet + halo + folds + radialWhisper) * rift * breath;
-  a *= 0.55 + 0.45 * ring;
+    (core * 0.75 + sheet * 1.35 + halo * 1.2 + folds * 1.1 + radialWhisper * 1.4)
+    * rift * breath;
+  a *= 0.6 + 0.5 * ring;
   // Keep periphery quiet so the scene stays readable
-  a *= 1.0 - smoothstep(0.72, 1.35, r) * 0.65;
-  a = clamp(a, 0.0, 0.36);
+  a *= 1.0 - smoothstep(0.72, 1.35, r) * 0.55;
+  a = clamp(a, 0.0, 0.62);
 
-  vec3 cyan = vec3(0.42, 0.78, 1.0);
-  vec3 violet = vec3(0.62, 0.42, 1.0);
-  vec3 cold = vec3(0.78, 0.88, 1.0);
+  vec3 cyan = vec3(0.5, 0.88, 1.0);
+  vec3 violet = vec3(0.7, 0.48, 1.0);
+  vec3 cold = vec3(0.88, 0.94, 1.0);
   vec3 col = mix(cyan, cold, clamp(core * 0.7, 0.0, 1.0));
   col = mix(col, violet, violetEdge * 0.45);
-  col += cyan * cyanEdge * 0.35;
-  col += violet * folds * 0.4;
+  col += cyan * cyanEdge * 0.5;
+  col += violet * folds * 0.5;
+  col *= 1.0 + rift * 0.45;
 
   gl_FragColor = vec4(col, a);
 }

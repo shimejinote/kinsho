@@ -28,6 +28,12 @@ let afterglow = 0;
 /** 0..1 while in crossing; 0 otherwise. */
 let crossing = 0;
 let phaseAge = 0;
+/** Set at crossing flash peak — portal arrival for apps handoff. */
+let arrivalPending = false;
+/** Guards one arrival signal per crossing beat. */
+let arrivalSignaled = false;
+/** Slot-style “プシュン” hold — lock the frame before iris reveal. */
+let freezeHold = false;
 
 const RESTORE_SEC = 1.6;
 const MAX_CYCLE = 8;
@@ -53,6 +59,50 @@ export function resetSuction() {
   afterglow = 0;
   crossing = 0;
   phaseAge = 0;
+  arrivalPending = false;
+  arrivalSignaled = false;
+  freezeHold = false;
+}
+
+/** True once at dimensional arrival (flash) until consumed. */
+export function consumeArrival() {
+  if (!arrivalPending) return false;
+  arrivalPending = false;
+  return true;
+}
+
+/**
+ * Lock the warp at flash-peak nucleus — “プシュン” freeze cushion.
+ * Field time stops; flash/stillness stay lit until settle/iris.
+ */
+export function holdArrivalFreeze() {
+  freezeHold = true;
+  holding = false;
+  autoPlay = false;
+  phase = 'crossing';
+  strength = 1;
+  restore = 0;
+  crossing = 0.12;
+  phaseAge = CROSSING_SEC * 0.12;
+  afterglow = 1;
+  arrivalPending = false;
+}
+
+/**
+ * Cut the ritual short after apps handoff — no bang-restore bounce.
+ */
+export function settleAfterArrival() {
+  freezeHold = false;
+  holding = false;
+  autoPlay = false;
+  phase = 'idle';
+  strength = 0;
+  restore = 0;
+  crossing = 0;
+  phaseAge = 0;
+  afterglow = 0;
+  arrivalPending = false;
+  arrivalSignaled = false;
 }
 
 export function setSuctionHolding(next: boolean) {
@@ -69,6 +119,7 @@ export function isSuctionHolding() {
 /** True while a one-click or long-press ritual should ignore new triggers. */
 export function isWarpBusy() {
   return (
+    freezeHold ||
     autoPlay ||
     phase === 'crossing' ||
     phase === 'restoring' ||
@@ -145,12 +196,13 @@ export function isCrossing() {
  * Peaks early in the crossing beat.
  */
 export function getFlash() {
+  if (freezeHold) return 0.36;
   if (phase !== 'crossing' || crossing <= 0) return 0;
   const c = crossing;
-  // Keep flash early so the extra crossing time is mostly stillness
+  // Hot early flash — brighter for nucleus → iris continuity
   const peak = Math.exp(-Math.pow((c - 0.12) / 0.055, 2));
-  const tail = Math.exp(-Math.pow((c - 0.24) / 0.1, 2)) * 0.35;
-  return Math.min(1, peak * 0.85 + tail * 0.4);
+  const tail = Math.exp(-Math.pow((c - 0.24) / 0.1, 2)) * 0.45;
+  return Math.min(1, peak * 1.05 + tail * 0.5);
 }
 
 /**
@@ -190,6 +242,7 @@ export function getLightning() {
  * Motion hush (pattern E). Freezes mid-crossing after the flash.
  */
 export function getStillness() {
+  if (freezeHold) return 1;
   if (phase !== 'crossing' || crossing <= 0) return 0;
   const c = crossing;
   return smoothstep(0.04, 0.12, c) * (1 - smoothstep(0.42, 0.58, c));
@@ -197,8 +250,14 @@ export function getStillness() {
 
 /** Slow the field while stillness holds. */
 export function getFieldTimeScale() {
+  if (freezeHold) return 0;
   const still = getStillness();
   return 1 - still * 0.92;
+}
+
+/** 1 while the pre-iris “プシュン” cushion is held. */
+export function getArrivalFreeze() {
+  return freezeHold ? 1 : 0;
 }
 
 function enterCrossing() {
@@ -208,6 +267,7 @@ function enterCrossing() {
   phase = 'crossing';
   cycle = Math.min(MAX_CYCLE, cycle + 1);
   afterglow = Math.min(1, 0.35 + cycle * 0.1);
+  arrivalSignaled = false;
 }
 
 function enterRestoring() {
@@ -245,11 +305,33 @@ export function tickSuction(dt: number): SuctionFrame {
     cycle = 0;
   }
 
+  if (freezeHold) {
+    crossing = 0.12;
+    strength = 1;
+    afterglow = 1;
+    return {
+      strength: 1,
+      restore: 0,
+      glow: getGlow(),
+      phase,
+      cycle,
+      crossing,
+      flash: getFlash(),
+      stillness: 1,
+      rift: 0,
+    };
+  }
+
   if (phase === 'crossing') {
     phaseAge += d;
     crossing = Math.min(1, phaseAge / CROSSING_SEC);
     strength = 1;
     afterglow = Math.max(afterglow, 0.85 + getFlash() * 0.15);
+    // Arrive as the soft A flash peaks — iris opens with the nucleus
+    if (!arrivalSignaled && crossing >= 0.08) {
+      arrivalSignaled = true;
+      arrivalPending = true;
+    }
     if (crossing >= 1) {
       enterRestoring();
     }

@@ -3,7 +3,13 @@
 import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { getGlow, getSuction, getSuctionPhase, getStillness } from './suctionInput';
+import {
+  getArrivalFreeze,
+  getGlow,
+  getSuction,
+  getSuctionPhase,
+  getStillness,
+} from './suctionInput';
 
 const vert = /* glsl */ `
 varying vec2 vUv;
@@ -128,6 +134,7 @@ export default function WarpWind() {
     }
     fly = Math.min(1, fly + getGlow() * 0.05);
     fly *= 1 - getStillness() * 0.85;
+    fly *= 1 - getArrivalFreeze();
 
     const cur = mat.current.uniforms.uWarp.value as number;
     mat.current.uniforms.uWarp.value = THREE.MathUtils.lerp(

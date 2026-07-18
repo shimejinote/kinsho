@@ -10,13 +10,12 @@ import {
   getSuctionPhase,
   getStillness,
 } from './suctionInput';
+import { getActiveSky } from './dailySky';
 
 const BASE_POS = new THREE.Vector3(0, 0.15, 4.2);
 const WARP_POS = new THREE.Vector3(0, 0.06, 2.35);
 const BASE_FOV = 42;
 const WARP_FOV = 54;
-const BASE_EXPOSURE = 0.82;
-const WARP_EXPOSURE = 0.62;
 
 /**
  * Body immersion: ease the camera into the portal and open FOV while warping.
@@ -72,9 +71,11 @@ export default function WarpCamera() {
     camera.position.lerp(tmp.current, 1 - Math.pow(0.0008, dt));
     camera.lookAt(0, 0, 0);
 
+    const baseExposure = getActiveSky().exposure;
+    const warpExposure = Math.max(0.55, baseExposure - 0.2);
     const exposure =
-      THREE.MathUtils.lerp(BASE_EXPOSURE, WARP_EXPOSURE, fly * 0.85) +
-      flash * 0.55 -
+      THREE.MathUtils.lerp(baseExposure, warpExposure, fly * 0.85) +
+      flash * 0.9 -
       still * 0.06;
     gl.toneMappingExposure = THREE.MathUtils.lerp(
       gl.toneMappingExposure,

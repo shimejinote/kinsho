@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-import ConstructionSite from '@/components/ConstructionSite';
+import CyberpunkAppsIndex from '@/components/apps/CyberpunkAppsIndex';
 
 export const metadata: Metadata = {
-  title: 'Apps — Under Construction',
-  description: 'アプリ一覧は鋭意工事中です',
+  title: 'kinsho // apps',
+  description: '虚空を抜けた先の端末一覧',
 };
 
 export default function AppsPage() {
-  return <ConstructionSite />;
+  return <CyberpunkAppsIndex />;
 }

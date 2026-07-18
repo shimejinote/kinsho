@@ -6,17 +6,17 @@ import * as THREE from 'three';
 import type { JourneyDirector } from '../journey/JourneyDirector';
 import type { JourneyStageId } from '../journey/timeline';
 import { glslNoise } from './noise.glsl';
+import { getActiveSky, mulberry32, type PickedSky } from './dailySky';
 import { getFieldTimeScale, resetSuction, tickSuction } from './suctionInput';
 
 /**
  * Starfield motes (GPU points).
- * Idle: irregular drift with gentle per-star speed variety, luminosity hierarchy,
- * spectral tint + twinkle.
+ * Idle: classic circular drift; tint/motion shift with the daily sky.
  * Long-press: dimensional warp — stars birth at the portal rim, fall forward
  * in depth, and streak radially outward; keep-out disk stays empty.
  * Full commit: colored bang choruses, then drift again.
  */
-const DEFAULT_COUNT = 25000;
+const DEFAULT_COUNT = 50000;
 
 /** World-space radius around the portal where stars must not appear. */
 const CLEAR_RADIUS = 0.78;
@@ -30,6 +30,20 @@ uniform float uGlow;
 uniform float uPixelRatio;
 uniform float uColors;
 uniform float uClearR;
+uniform float uSpeedScale;
+uniform float uYAmpScale;
+uniform float uSizeScale;
+uniform float uTwinkleScale;
+uniform float uRadiusMin;
+uniform float uRadiusSpan;
+uniform float uShellPow;
+uniform float uStretchLo;
+uniform float uStretchHi;
+uniform float uZBias;
+uniform float uNoiseAmp;
+uniform float uYPhase;
+uniform float uSpinSign;
+uniform float uRadiusJitter;
 varying float vDim;
 varying float vGlow;
 varying float vPick;
@@ -118,46 +132,23 @@ vec3 keepClear(vec3 p, float clearR) {
 
 void main(){
   float id = aSeed.x * 6.2831853;
-  float shell = aSeed.y;
+  float shell = pow(aSeed.y, uShellPow);
+  float speed = (0.006 + aSeed.z * 0.012) * uSpeedScale;
 
-  // Gentle idle speed variety (seed-driven): crawl → soft drift; some reverse
-  float speedHash = fract(aSeed.z * 0.73 + aSeed.x * 2.17);
-  float speed = mix(0.018, 0.085, pow(speedHash, 0.75));
-  float spinDir = fract(aSeed.x * 5.33 + aSeed.z) > 0.38 ? 1.0 : -1.0;
-
-  float radius = 1.6 + shell * 3.2;
-  float phase0 = id + aSeed.z * 5.1 + shell * 2.3;
-  float t = uTime * speed + phase0;
-
-  // Soft uneven angular rate — irregular but calm
-  float angJitter =
-    sin(uTime * (0.18 + aSeed.z * 0.45) + id * 2.0) * (0.04 + aSeed.x * 0.1)
-    + cos(uTime * (0.08 + shell * 0.25) + aSeed.z * 8.0) * 0.05;
-  float ang = t * spinDir + angJitter;
-
-  // Subtle radial breathing — breaks concentric circles without agitation
-  float ecc = 0.06 + fract(aSeed.x * 3.71 + aSeed.z) * 0.18;
-  float rWobble = 1.0
-    + ecc * 0.35 * sin(t * (0.35 + aSeed.z * 0.7) + id)
-    + (0.02 + aSeed.x * 0.05) * sin(t * (0.7 + shell * 0.9) + aSeed.z * 9.0);
-  float rXZ = radius * rWobble;
-  float stretchZ = mix(0.75, 1.12, fract(aSeed.z * 4.91));
-
+  float jitter = (aSeed.z - 0.5) * uRadiusJitter;
+  float radius = uRadiusMin + shell * uRadiusSpan * (1.0 + jitter);
+  float stretch = mix(uStretchLo, uStretchHi, fract(aSeed.z * 4.91 + aSeed.x));
+  float t = uTime * speed * uSpinSign + id;
   vec3 orbit;
-  orbit.x = cos(ang) * rXZ;
-  orbit.z = sin(ang) * rXZ * stretchZ - 0.4;
-  // Soft vertical wander (per-star rate & amp)
-  float yRate = 0.15 + fract(aSeed.x * 8.13) * 0.45;
-  float yAmp = radius * (0.06 + fract(aSeed.z * 5.27) * 0.12);
-  orbit.y = sin(t * yRate + shell * 9.0) * yAmp
-    + cos(uTime * (0.1 + aSeed.z * 0.28) + id) * yAmp * 0.35
+  orbit.x = cos(t) * radius;
+  orbit.z = sin(t) * radius * stretch + uZBias;
+  orbit.y =
+    sin(t * uYPhase + shell * 9.0) * radius * 0.4 * uYAmpScale
+    + (aSeed.x - 0.5) * radius * 0.12
     + 0.1;
 
-  // Light organic drift noise — varied, not chaotic
-  float nSpeed = 0.02 + aSeed.z * 0.045;
-  vec3 np = orbit * 0.2 + vec3(uTime * nSpeed, uTime * nSpeed * 0.7, aSeed.x * 10.0);
-  float nAmp = 0.08 + aSeed.z * 0.12 + shell * 0.02;
-  orbit += vec3(snoise(np), snoise(np + 21.0), snoise(np + 54.0)) * nAmp;
+  vec3 np = orbit * 0.25 + vec3(0.0, uTime * 0.008, aSeed.x * 3.0);
+  orbit += vec3(snoise(np), snoise(np + 21.0), snoise(np + 54.0)) * uNoiseAmp;
   orbit = keepClear(orbit, uClearR);
 
   float suck = clamp(uSuck, 0.0, 1.0);
@@ -192,6 +183,8 @@ void main(){
   float glowPop = 0.0;
   float streak = 0.0;
   float trailAng = atan(orbit.y + 1e-4, orbit.x + 1e-4);
+  // Late warp: field collapses into the portal nucleus (prepares iris handoff)
+  float pinch = pow(smoothstep(0.55, 0.97, suck), 1.85);
 
   if (rest > 0.001) {
     vec3 bang = bangExpand(orbit, re, uColors, aSeed, shell);
@@ -209,14 +202,40 @@ void main(){
     float w = smoothstep(0.03, 0.42, suck);
     w = w * w * (3.0 - 2.0 * w);
     center = mix(orbit, stream, w);
-    center = keepClear(center, clearR);
-    // Brighter near the rim (source of the warp), streaks strengthen as they flee
-    glowPop = fly * w * (0.35 + rimBias * 1.1 + outward * 0.35) + uGlow * 0.3;
-    streak = fly * w * mix(0.7, 1.35, outward);
-    trailAng = rayAng;
-    vec2 radDir = normalize(center.xy + 1e-4);
-    center.xy += radDir * streak * 0.5;
-    center = keepClear(center, clearR);
+    // Travel streaks outward, then reverse into the gate
+    float travel = w * (1.0 - pinch);
+    if (travel > 0.001) {
+      center = keepClear(center, clearR);
+      glowPop = fly * travel * (0.35 + rimBias * 1.1 + outward * 0.35) + uGlow * 0.3;
+      streak = fly * travel * mix(0.7, 1.35, outward);
+      trailAng = rayAng;
+      vec2 radDir = normalize(center.xy + 1e-4);
+      center.xy += radDir * streak * 0.5;
+      center = keepClear(center, clearR);
+    }
+    if (pinch > 0.001) {
+      // Perfect-circle collapse: angle locked, radius → one clean ring
+      float ang = rayAng;
+      float rNow = max(length(center.xy), 1e-4);
+      // Narrow band early → nearly single radius at full pinch (no jagged scallops)
+      float rPerfect = mix(0.2, 0.12, pow(pinch, 1.15));
+      float band = mix(0.14, 0.006, pow(pinch, 1.1));
+      float rTarget = rPerfect + (shell - 0.5) * band;
+      float blend = smoothstep(0.05, 0.95, pinch);
+      blend = blend * blend * (3.0 - 2.0 * blend);
+      float rCirc = mix(rNow, max(0.05, rTarget), blend);
+
+      vec3 nucleus;
+      nucleus.x = cos(ang) * rCirc;
+      nucleus.y = sin(ang) * rCirc;
+      nucleus.z = mix(center.z, 0.05, pinch);
+      center = mix(center, nucleus, blend);
+
+      // Kill streaks — spokes are what read as ギザギザ
+      streak *= 1.0 - blend;
+      trailAng = ang;
+      glowPop = max(glowPop, pinch * (0.85 + fly * 0.55) + uGlow * 0.35);
+    }
   } else {
     center = orbit;
     glowPop = 0.0;
@@ -225,9 +244,10 @@ void main(){
 
   glowPop = max(glowPop, uGlow * step(0.02, suck + rest));
 
-  // Hard hide anything that still sits in the keep-out disk
+  // Keep-out only while not collapsing into the aperture
   float xyR = length(center.xy);
-  float inClear = 1.0 - smoothstep(clearR * 0.92, clearR, xyR);
+  float inClear =
+    (1.0 - smoothstep(clearR * 0.92, clearR, xyR)) * (1.0 - pinch);
 
   vec4 mv = modelViewMatrix * vec4(center, 1.0);
   gl_Position = projectionMatrix * mv;
@@ -239,13 +259,16 @@ void main(){
   float sz = mix(0.5, 1.25, mid) + lum * 2.9;
   sz = max(sz, step(0.001, rest) * (1.1 + lum * 2.2));
   sz *= 1.0 + streak * 4.2;
+  // Soft mote on the ring — large streaky points make a jagged crown
+  sz *= mix(1.0, 0.45 + mid * 0.25, pinch);
+  sz *= uSizeScale;
   sz *= 2.4 * uPixelRatio;
   sz *= 1.0 - inClear;
   gl_PointSize = clamp(sz * (2.8 / max(0.6, -mv.z)), 0.0, 80.0);
 
   float calm = 1.0 - clamp(max(suck, rest) * 1.15, 0.0, 1.0);
   float twPhase = uTime * (1.15 + aSeed.x * 4.2) + aSeed.y * 6.28318;
-  float twinkle = 1.0 + (0.05 + lum * 0.16) * sin(twPhase) * calm;
+  float twinkle = 1.0 + (0.05 + lum * 0.16) * sin(twPhase) * calm * uTwinkleScale;
 
   float baseDim = 0.1 + 0.22 * mid + 0.78 * lum;
   vDim = baseDim * twinkle * (1.0 - inClear);
@@ -271,6 +294,9 @@ varying float vLum;
 varying float vTrailAng;
 uniform float uColors;
 uniform float uLayerOpacity;
+uniform vec3 uStarCool;
+uniform vec3 uStarWarm;
+uniform vec3 uStarHeat;
 
 vec3 paletteColor(float idx) {
   float i = floor(idx + 0.001);
@@ -282,16 +308,6 @@ vec3 paletteColor(float idx) {
   if (i < 5.5) return vec3(1.00, 0.60, 0.20);
   if (i < 6.5) return vec3(0.40, 0.55, 1.00);
   return vec3(1.00, 0.75, 0.90);
-}
-
-vec3 spectralTint(float t) {
-  vec3 kStar = vec3(1.00, 0.70, 0.48);
-  vec3 gStar = vec3(1.00, 0.93, 0.78);
-  vec3 aStar = vec3(0.86, 0.91, 1.00);
-  vec3 bStar = vec3(0.62, 0.76, 1.00);
-  if (t < 0.32) return mix(kStar, gStar, t / 0.32);
-  if (t < 0.62) return mix(gStar, aStar, (t - 0.32) / 0.30);
-  return mix(aStar, bStar, (t - 0.62) / 0.38);
 }
 
 void main(){
@@ -328,12 +344,9 @@ void main(){
   vec3 tint;
   float n = floor(uColors + 0.001);
   if (n < 1.0) {
-    vec3 spectral = spectralTint(vTemp);
-    spectral = mix(spectral, vec3(1.0), vLum * 0.28);
-    // Dimensional wash: violet-cyan rift light while warping
-    vec3 rift = mix(spectral, vec3(0.55, 0.72, 1.0), 0.45);
-    rift = mix(rift, vec3(0.72, 0.45, 1.0), st * 0.35);
-    tint = mix(spectral, rift, st * 0.8);
+    // Daily sky tint; warp heat leans without washing to white
+    vec3 cool = mix(uStarCool, uStarWarm, clamp(vDim * 1.1, 0.0, 1.0));
+    tint = mix(cool, uStarHeat, clamp(st * 0.85, 0.0, 1.0));
   } else {
     float slot = floor(fract(vPick * 1.718) * n);
     tint = paletteColor(slot);
@@ -355,6 +368,7 @@ void main(){
 
 type ParticleSwarmProps = {
   count?: number;
+  sky?: PickedSky;
   journey?: {
     director: JourneyDirector;
     stageId: JourneyStageId;
@@ -363,11 +377,16 @@ type ParticleSwarmProps = {
 
 export default function ParticleSwarm({
   journey,
+  sky: skyProp,
   count = DEFAULT_COUNT,
 }: ParticleSwarmProps = {}) {
   const mat = useRef<THREE.ShaderMaterial>(null);
   const fieldTime = useRef(0);
-  const particleCount = Math.max(500, Math.floor(count));
+  const sky = skyProp ?? getActiveSky();
+  const particleCount = Math.max(
+    500,
+    Math.floor(count * (journey ? 1 : sky.densityScale)),
+  );
 
   useEffect(() => {
     if (journey) return;
@@ -377,15 +396,17 @@ export default function ParticleSwarm({
   }, [journey]);
 
   const { positions, seeds } = useMemo(() => {
+    const rng = mulberry32(sky.seed ^ 0x5f3759df);
     const positions = new Float32Array(particleCount * 3);
     const seeds = new Float32Array(particleCount * 3);
+    // Flat shell draw — uShellPow reshapes radial density in the shader
     for (let i = 0; i < particleCount; i++) {
-      seeds[i * 3 + 0] = Math.random();
-      seeds[i * 3 + 1] = Math.pow(Math.random(), 0.6);
-      seeds[i * 3 + 2] = Math.random();
+      seeds[i * 3 + 0] = rng();
+      seeds[i * 3 + 1] = rng();
+      seeds[i * 3 + 2] = rng();
     }
     return { positions, seeds };
-  }, [particleCount]);
+  }, [particleCount, sky.seed]);
 
   const uniforms = useMemo(
     () => ({
@@ -397,8 +418,25 @@ export default function ParticleSwarm({
       uColors: { value: 0 },
       uLayerOpacity: { value: 1 },
       uClearR: { value: CLEAR_RADIUS },
+      uSpeedScale: { value: sky.speedScale },
+      uYAmpScale: { value: sky.yAmpScale },
+      uSizeScale: { value: sky.sizeScale },
+      uTwinkleScale: { value: sky.twinkleScale },
+      uStarCool: { value: new THREE.Vector3(...sky.starCool) },
+      uStarWarm: { value: new THREE.Vector3(...sky.starWarm) },
+      uStarHeat: { value: new THREE.Vector3(...sky.starHeat) },
+      uRadiusMin: { value: sky.field.radiusMin },
+      uRadiusSpan: { value: sky.field.radiusSpan },
+      uShellPow: { value: sky.field.shellPow },
+      uStretchLo: { value: sky.field.stretchLo },
+      uStretchHi: { value: sky.field.stretchHi },
+      uZBias: { value: sky.field.zBias },
+      uNoiseAmp: { value: sky.field.noiseAmp },
+      uYPhase: { value: sky.field.yPhase },
+      uSpinSign: { value: sky.field.spinSign },
+      uRadiusJitter: { value: sky.field.radiusJitter },
     }),
-    [],
+    [sky],
   );
 
   useFrame((state, delta) => {
