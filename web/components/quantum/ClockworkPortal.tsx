@@ -13,6 +13,11 @@ import {
   setSuctionHolding,
   triggerWarpPlayback,
 } from './suctionInput';
+import {
+  getPortalReveal,
+  getPortalWhoosh,
+  isPortalReady,
+} from './voidGenesis';
 
 /** Pointer hold shorter than this → one-click auto ritual (not a cancelable long-press). */
 const CLICK_MS = 280;
@@ -38,6 +43,7 @@ varying vec2 vUv;
 uniform float uTime;
 uniform float uHover;
 uniform float uSuck; // 0..1 long-press — opens the dimensional aperture
+uniform float uReveal; // boot whoosh opacity 0..1
 
 void main() {
   vec2 p = vUv * 2.0 - 1.0;
@@ -130,6 +136,7 @@ void main() {
   alpha = max(alpha, swirlZone * (0.88 + maelstrom * 0.2));
   alpha = max(alpha, corona * 1.1 + aperture * 0.35 * boost);
   alpha *= veil;
+  alpha *= clamp(uReveal, 0.0, 1.0);
   alpha = clamp(alpha * (0.85 + 0.2 * uHover + boost * 0.12), 0.0, 1.0);
 
   gl_FragColor = vec4(col, alpha);
@@ -161,6 +168,7 @@ export default function ClockworkPortal({ interactive = true }: Props) {
       uTime: { value: 0 },
       uHover: { value: 0 },
       uSuck: { value: 0 },
+      uReveal: { value: 0 },
     }),
     [],
   );
@@ -198,13 +206,20 @@ export default function ClockworkPortal({ interactive = true }: Props) {
         hover.current) *
       (1 - Math.pow(0.001, dt));
 
+    const whoosh = getPortalWhoosh();
+    const reveal = getPortalReveal();
+    const ready = isPortalReady();
+
     if (group.current) {
-      const s =
+      const target =
         SCALE *
+        Math.max(0.001, whoosh) *
         (1 + hover.current * 0.08 + pressBoost * 0.04 + suck * 0.22);
+      // Snap toward whoosh (ぶわん) without fighting the overshoot curve
       group.current.scale.setScalar(
-        THREE.MathUtils.lerp(group.current.scale.x || s, s, 0.12),
+        THREE.MathUtils.lerp(group.current.scale.x || target, target, 0.22),
       );
+      group.current.visible = reveal > 0.02;
     }
 
     if (mat.current) {
@@ -219,23 +234,28 @@ export default function ClockworkPortal({ interactive = true }: Props) {
         1,
         suck * (0.65 + (0.35 * Math.min(boost, 2.5)) / 2.5),
       );
+      mat.current.uniforms.uReveal.value = reveal;
     }
 
     if (interactive) {
       document.body.style.cursor =
-        hovered || holding.current || auto ? 'pointer' : '';
+        ready && (hovered || holding.current || auto) ? 'pointer' : '';
     }
   });
+
+  const live = interactive;
 
   return (
     <group
       ref={group}
-      scale={SCALE}
+      scale={0.001}
+      visible={false}
       onPointerDown={
-        interactive
+        live
           ? (e: ThreeEvent<PointerEvent>) => {
               e.stopPropagation();
               e.nativeEvent.preventDefault();
+              if (!isPortalReady()) return;
               // Ignore while a ritual is already playing (debounce / double-fire).
               if (isWarpBusy()) return;
               activePress.current = true;
@@ -246,7 +266,7 @@ export default function ClockworkPortal({ interactive = true }: Props) {
           : undefined
       }
       onPointerUp={
-        interactive
+        live
           ? (e: ThreeEvent<PointerEvent>) => {
               e.stopPropagation();
               if (!activePress.current) return;
@@ -254,6 +274,7 @@ export default function ClockworkPortal({ interactive = true }: Props) {
               activePress.current = false;
               holding.current = false;
               setSuctionHolding(false);
+              if (!isPortalReady()) return;
               // Short click/tap → one-shot full ritual (survives release).
               // Longer press that releases early still cancels via holding=false.
               if (held < CLICK_MS) triggerWarpPlayback();
@@ -261,14 +282,15 @@ export default function ClockworkPortal({ interactive = true }: Props) {
           : undefined
       }
       onPointerOver={
-        interactive
+        live
           ? (e: ThreeEvent<PointerEvent>) => {
               e.stopPropagation();
+              if (!isPortalReady()) return;
               setHovered(true);
             }
           : undefined
       }
-      onPointerOut={interactive ? () => setHovered(false) : undefined}
+      onPointerOut={live ? () => setHovered(false) : undefined}
     >
       <mesh renderOrder={11}>
         <planeGeometry args={[2.2, 2.2]} />

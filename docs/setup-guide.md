@@ -285,7 +285,58 @@ web/app/<new-app>/
 
 ---
 
-## 10. 運用メモ（コスト）
+## 10. カスタムドメイン + Cloudflare（shimeji.blog）
+
+正規 URL は `https://shimeji.blog`（apex）。お名前.com はレジストラのまま、ネームサーバだけ Cloudflare Free に委譲し、オリジンは既存 SWA です。
+
+Bicep への customDomains 埋め込みは行いません（検証トークン運用が手動になりやすいため）。以下はポータル／CLI での手動手順です。
+
+### 10.1 Cloudflare ゾーン + NS 委譲
+
+1. [Cloudflare](https://dash.cloudflare.com) で `shimeji.blog` を追加（Free）
+2. 表示されたネームサーバ 2 本を控える
+3. お名前.com のドメイン設定で NS を Cloudflare のものに変更（反映に数時間〜48h）
+
+### 10.2 Azure SWA にカスタムドメイン追加
+
+```powershell
+az staticwebapp hostname set `
+  -n <swaName> -g rg-kinsho `
+  --hostname shimeji.blog
+```
+
+ポータルでも可: Static Web App → Custom domains → Add → `shimeji.blog`  
+検証は **TXT**（`_dnsauth`）を使う。Cloudflare DNS に TXT を追加し、ステータスが **Ready** になるまで待つ。
+
+### 10.3 Cloudflare DNS
+
+| Type | Name | Content | Proxy |
+|------|------|---------|-------|
+| TXT | `_dnsauth`（Azure が表示するホスト） | Azure の validation token | DNS only |
+| CNAME | `@` | `<swa>.azurestaticapps.net` | 最初は **DNS only** → Ready 後 **Proxied** |
+| CNAME | `www` | `shimeji.blog` または同じ SWA ホスト | 同上 |
+
+- apex の CNAME は Cloudflare の CNAME flattening で動作する
+- SSL/TLS モード: **Full (strict)**
+- TXT `_dnsauth` は証明書更新のため残す
+-（任意）Redirect Rule: `www.shimeji.blog/*` → `https://shimeji.blog/$1`（301）
+
+### 10.4 Cloudflare セキュリティ（無料枠）
+
+- Security → Bots → **Bot Fight Mode** ON
+- Security → WAF → マネージドルール（Free で使える範囲）ON
+- Rate limiting（Free 枠内）: `/api/*` を厳しめに
+- Under Attack Mode は平時 OFF
+
+### 10.5 リポジトリ側（デプロイ後）
+
+- `NEXT_PUBLIC_SITE_URL=https://shimeji.blog`（`deploy.yml` / `.env.example` 済み）
+- `staticwebapp.config.json` に HSTS 済み
+- 確認: `https://shimeji.blog/`・`/api/health`・証明書・CSP/HSTS ヘッダ
+
+---
+
+## 11. 運用メモ（コスト）
 
 | リソース | 目安 |
 |----------|------|

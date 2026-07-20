@@ -31,10 +31,18 @@ type JourneyQualityApi = {
 const JourneyQualityContext = createContext<JourneyQualityApi | null>(null);
 
 function subscribeReducedMotion(onStoreChange: () => void) {
-  if (typeof window === 'undefined') return () => {};
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return () => {};
+  }
   const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-  media.addEventListener('change', onStoreChange);
-  return () => media.removeEventListener('change', onStoreChange);
+  if (!media) return () => {};
+  // Older Safari used addListener
+  if (typeof media.addEventListener === 'function') {
+    media.addEventListener('change', onStoreChange);
+    return () => media.removeEventListener('change', onStoreChange);
+  }
+  media.addListener(onStoreChange);
+  return () => media.removeListener(onStoreChange);
 }
 
 export function JourneyQualityProvider({ children }: { children: ReactNode }) {

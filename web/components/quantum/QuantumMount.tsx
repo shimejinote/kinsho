@@ -1,10 +1,14 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import CyberpunkAppsIndex from '../apps/CyberpunkAppsIndex';
 import appsStyles from '../apps/CyberpunkAppsIndex.module.css';
 import { getActiveSky } from './dailySky';
+import { isNoteInbound } from './noteInbound';
+import NoteBridge from './NoteBridge';
+import WarpDebugPanel from './WarpDebugPanel';
+import GlyphStarsToggle from './GlyphStarsToggle';
 import {
   consumeArrival,
   holdArrivalFreeze,
@@ -12,25 +16,25 @@ import {
   settleAfterArrival,
 } from './suctionInput';
 
-const QuantumScene = dynamic(() => import('./QuantumScene'), { ssr: false });
+const QuantumScene = dynamic(() => import('./QuantumScene'), {
+  ssr: false,
+  loading: () => (
+    <div className="absolute inset-0 bg-[#04060a]" aria-hidden />
+  ),
+});
 
 type Phase = 'void' | 'freeze' | 'opening' | 'apps';
 
 const FREEZE_MS = 2000;
-/** Prefetch apps tree + fonts while freeze holds. */
 const APPS_WARM_MS = 320;
-/** Freeze veil stays on top of iris for this long, then fades. */
 const VEIL_FADE_MS = 480;
-/** Release WebGL freeze after iris already covers the nucleus. */
 const SETTLE_MS = 400;
-/** Unmount canvas after iris fill (avoids mid-open hitch). */
 const VOID_UNMOUNT_MS = 980;
-/** Enable apps pointer events after iris settles. */
 const APPS_LIVE_MS = 740;
 
 /**
  * Single-page void → apps handoff.
- * Warm apps during freeze; crossfade veil → iris (no hard cut).
+ * note inbound: optional paper→black veil only (does not block the canvas).
  */
 export default function QuantumMount() {
   const [phase, setPhase] = useState<Phase>('void');
@@ -39,6 +43,15 @@ export default function QuantumMount() {
   const [veilMounted, setVeilMounted] = useState(false);
   const [veilOut, setVeilOut] = useState(false);
   const [freezeStyle, setFreezeStyle] = useState<CSSProperties>({});
+  // Defer note detection until after mount — SSR has no window/search,
+  // and useState(isNoteInbound) causes a hydration mismatch (+ Canvas crash).
+  const [noteBridge, setNoteBridge] = useState(false);
+
+  const onNoteDone = useCallback(() => setNoteBridge(false), []);
+
+  useEffect(() => {
+    if (isNoteInbound()) setNoteBridge(true);
+  }, []);
 
   useEffect(() => {
     if (phase !== 'void') return;
@@ -78,7 +91,6 @@ export default function QuantumMount() {
     if (phase !== 'opening') return;
     setAppsMounted(true);
 
-    // Double-rAF: paint warmed apps idle frame, then start iris (avoids layout hitch)
     let raf2 = 0;
     const raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(() => setVeilOut(true));
@@ -105,6 +117,7 @@ export default function QuantumMount() {
     setVeilMounted(false);
     setVeilOut(false);
     setVoidLive(true);
+    setNoteBridge(false);
     setPhase('void');
   };
 
@@ -118,9 +131,10 @@ export default function QuantumMount() {
         className="absolute inset-0"
         style={{
           opacity: voidLive ? (phase === 'apps' ? 0 : 1) : 0,
-          transition: phase === 'opening' || phase === 'apps'
-            ? 'opacity 0.55s ease-out'
-            : undefined,
+          transition:
+            phase === 'opening' || phase === 'apps'
+              ? 'opacity 0.55s ease-out'
+              : undefined,
           visibility: voidLive ? 'visible' : 'hidden',
           pointerEvents: phase === 'void' ? 'auto' : 'none',
           willChange: phase === 'opening' ? 'opacity' : undefined,
@@ -129,6 +143,11 @@ export default function QuantumMount() {
       >
         {voidLive ? <QuantumScene /> : null}
       </div>
+
+      {noteBridge ? <NoteBridge onDone={onNoteDone} /> : null}
+
+      {phase === 'void' && voidLive ? <WarpDebugPanel /> : null}
+      {phase === 'void' && voidLive ? <GlyphStarsToggle /> : null}
 
       {veilMounted ? (
         <div

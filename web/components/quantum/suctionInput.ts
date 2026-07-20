@@ -1,15 +1,22 @@
 /**
- * Drain → full absorb → A+E crossing flash → glow bang restore.
+ * Drain → full absorb → crossing flash → glow bang restore.
  * Long-press: cycles repeat while held; glow stacks.
  * One-click: `triggerWarpPlayback()` auto-ramps once through the full ritual
  * (continues after pointer release). Strength ramps slowly — dimensional warp, not a snap.
  *
- * Crossing (adopted A+E): soft cold flash (A) + motion hush (E) at portal entry.
+ * Crossing curves come from `getWarpDivePattern()` (random dive per ritual).
  */
+
+import {
+  getWarpDivePattern,
+  pickRandomWarpDive,
+  setWarpDiveId,
+  type WarpDiveId,
+} from './warpPattern';
 
 export type SuctionPhase = 'idle' | 'sucking' | 'crossing' | 'restoring';
 
-/** Adopted “passed through the portal” combo. */
+/** Adopted “passed through the portal” combo (legacy name). */
 export type CrossingPattern = 'ae';
 
 /** Canonical crossing pattern for portal entry. */
@@ -35,13 +42,17 @@ let arrivalSignaled = false;
 /** Slot-style “プシュン” hold — lock the frame before iris reveal. */
 let freezeHold = false;
 
-const RESTORE_SEC = 1.6;
+const RESTORE_SEC_DEFAULT = 1.6;
 const MAX_CYCLE = 8;
-/**
- * Crossing beat:
- * A flash early → E stillness through the middle of the beat.
- */
-const CROSSING_SEC = 1.9;
+const CROSSING_SEC_DEFAULT = 1.9;
+
+function crossingSec() {
+  return getWarpDivePattern().crossingSec || CROSSING_SEC_DEFAULT;
+}
+
+function restoreSec() {
+  return getWarpDivePattern().restoreSec || RESTORE_SEC_DEFAULT;
+}
 
 function smoothstep(e0: number, e1: number, x: number) {
   const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)));
@@ -72,6 +83,15 @@ export function consumeArrival() {
 }
 
 /**
+ * External rituals (glyph latent field) can request the same apps handoff
+ * as a warp crossing peak.
+ */
+export function signalPortalArrival() {
+  arrivalPending = true;
+  arrivalSignaled = true;
+}
+
+/**
  * Lock the warp at flash-peak nucleus — “プシュン” freeze cushion.
  * Field time stops; flash/stillness stay lit until settle/iris.
  */
@@ -83,7 +103,7 @@ export function holdArrivalFreeze() {
   strength = 1;
   restore = 0;
   crossing = 0.12;
-  phaseAge = CROSSING_SEC * 0.12;
+  phaseAge = crossingSec() * 0.12;
   afterglow = 1;
   arrivalPending = false;
 }
@@ -108,6 +128,7 @@ export function settleAfterArrival() {
 export function setSuctionHolding(next: boolean) {
   holding = next;
   if (next && phase === 'idle' && !autoPlay) {
+    pickRandomWarpDive();
     phase = 'sucking';
   }
 }
@@ -134,10 +155,16 @@ export function isWarpAutoPlaying() {
 /**
  * Start a one-shot suck → crossing → restore. Completes after pointer release.
  * No-ops if a ritual is already in progress (debounce / double-fire guard).
+ * Pass `dive` to lock a pattern (debug); otherwise picks at random when idle.
  */
-export function triggerWarpPlayback(): boolean {
+export function triggerWarpPlayback(opts?: { dive?: WarpDiveId }): boolean {
   if (autoPlay || phase === 'crossing' || phase === 'restoring') return false;
   if (phase === 'sucking' && holding) return false;
+  if (opts?.dive) {
+    setWarpDiveId(opts.dive);
+  } else if (phase === 'idle') {
+    pickRandomWarpDive();
+  }
   autoPlay = true;
   holding = false;
   if (phase === 'idle') phase = 'sucking';
@@ -192,17 +219,21 @@ export function isCrossing() {
 }
 
 /**
- * Soft white/cold flash envelope (pattern A).
- * Peaks early in the crossing beat.
+ * Soft white/cold flash envelope (pattern A family).
+ * Peak timing comes from the active dive pattern.
  */
 export function getFlash() {
   if (freezeHold) return 0.36;
   if (phase !== 'crossing' || crossing <= 0) return 0;
+  const p = getWarpDivePattern();
   const c = crossing;
-  // Hot early flash — brighter for nucleus → iris continuity
-  const peak = Math.exp(-Math.pow((c - 0.12) / 0.055, 2));
-  const tail = Math.exp(-Math.pow((c - 0.24) / 0.1, 2)) * 0.45;
-  return Math.min(1, peak * 1.05 + tail * 0.5);
+  const peak = Math.exp(
+    -Math.pow((c - p.flashPeakAt) / Math.max(0.01, p.flashWidth), 2),
+  );
+  const tail = Math.exp(
+    -Math.pow((c - (p.flashPeakAt + p.flashWidth * 2.2)) / (p.flashWidth * 1.8), 2),
+  ) * 0.45;
+  return Math.min(1, peak * p.flashGain + tail * 0.5);
 }
 
 /**
@@ -239,13 +270,17 @@ export function getLightning() {
 }
 
 /**
- * Motion hush (pattern E). Freezes mid-crossing after the flash.
+ * Motion hush (pattern E family). Window from active dive pattern.
  */
 export function getStillness() {
   if (freezeHold) return 1;
   if (phase !== 'crossing' || crossing <= 0) return 0;
+  const p = getWarpDivePattern();
   const c = crossing;
-  return smoothstep(0.04, 0.12, c) * (1 - smoothstep(0.42, 0.58, c));
+  return (
+    smoothstep(p.stillIn, p.flashPeakAt, c) *
+    (1 - smoothstep(p.stillOut0, p.stillOut1, c))
+  );
 }
 
 /** Slow the field while stillness holds. */
@@ -324,11 +359,11 @@ export function tickSuction(dt: number): SuctionFrame {
 
   if (phase === 'crossing') {
     phaseAge += d;
-    crossing = Math.min(1, phaseAge / CROSSING_SEC);
+    crossing = Math.min(1, phaseAge / crossingSec());
     strength = 1;
     afterglow = Math.max(afterglow, 0.85 + getFlash() * 0.15);
-    // Arrive as the soft A flash peaks — iris opens with the nucleus
-    if (!arrivalSignaled && crossing >= 0.08) {
+    const arriveAt = getWarpDivePattern().arrivalAt;
+    if (!arrivalSignaled && crossing >= arriveAt) {
       arrivalSignaled = true;
       arrivalPending = true;
     }
@@ -336,7 +371,7 @@ export function tickSuction(dt: number): SuctionFrame {
       enterRestoring();
     }
   } else if (phase === 'restoring') {
-    restore += d / RESTORE_SEC;
+    restore += d / restoreSec();
     if (restore >= 1) {
       restore = 0;
       strength = 0;
@@ -351,19 +386,21 @@ export function tickSuction(dt: number): SuctionFrame {
       }
     }
   } else if (phase === 'sucking') {
+    const pat = getWarpDivePattern();
     const target = driving ? 1 : 0;
-    // Slow dimensional warp: long ease-in, only slight haste after many cycles
-    const haste = 1 + Math.min(cycle, 5) * 0.02;
+    // Slow dimensional warp: long ease-in, pattern suckSpeed scales commit rate
+    const haste = (1 + Math.min(cycle, 5) * 0.02) * pat.suckSpeed;
     const base = driving ? Math.pow(0.996, haste) : 0.96;
     const alpha = 1 - Math.pow(base, d * 60);
-    // Extra ease-in: early press builds even slower (time spent opening the gate)
-    const easeIn = driving ? 0.22 + 0.78 * strength : 1;
+    const easeIn = driving
+      ? Math.max(0.12, 0.22 + 0.78 * strength) * (2 - Math.min(2, pat.suckEaseIn))
+      : 1;
     strength += (target - strength) * alpha * easeIn;
     if (!driving && strength < 0.001) {
       strength = 0;
       phase = 'idle';
     }
-    // Full entry → A+E crossing, then restore bang
+    // Full entry → crossing, then restore bang
     if (driving && strength >= 0.96) {
       enterCrossing();
     }

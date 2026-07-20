@@ -4,6 +4,7 @@ import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { getRift } from './suctionInput';
+import { getWarpDivePattern } from './warpPattern';
 
 const vert = /* glsl */ `
 varying vec2 vUv;
@@ -23,6 +24,7 @@ precision highp float;
 varying vec2 vUv;
 uniform float uRift;
 uniform float uTime;
+uniform vec3 uTint;
 
 void main() {
   float rift = clamp(uRift, 0.0, 1.0);
@@ -82,9 +84,14 @@ void main() {
   col += violet * folds * 0.5;
   col *= 1.0 + rift * 0.45;
 
+  // Per-pattern membrane signature.
+  col = mix(col, uTint * (0.6 + 0.8 * core), 0.5);
+
   gl_FragColor = vec4(col, a);
 }
 `;
+
+const tmpRift = new THREE.Vector3();
 
 export default function DimensionalRift() {
   const mat = useRef<THREE.ShaderMaterial>(null);
@@ -92,6 +99,7 @@ export default function DimensionalRift() {
     () => ({
       uRift: { value: 0 },
       uTime: { value: 0 },
+      uTint: { value: new THREE.Vector3(0.55, 0.85, 1.0) },
     }),
     [],
   );
@@ -107,6 +115,11 @@ export default function DimensionalRift() {
       ease,
     );
     mat.current.uniforms.uTime.value = state.clock.elapsedTime;
+    const rc = getWarpDivePattern().visual.riftColor;
+    (mat.current.uniforms.uTint.value as THREE.Vector3).lerp(
+      tmpRift.set(rc[0], rc[1], rc[2]),
+      1 - Math.pow(0.02, dt),
+    );
   });
 
   return (

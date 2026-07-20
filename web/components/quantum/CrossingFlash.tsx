@@ -5,6 +5,7 @@ import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { getArrivalFreeze, getFlash, getStillness } from './suctionInput';
 import { getActiveSky } from './dailySky';
+import { getWarpDivePattern } from './warpPattern';
 
 const vert = /* glsl */ `
 varying vec2 vUv;
@@ -25,6 +26,8 @@ uniform vec3 uFzCore;
 uniform vec3 uFzMid;
 uniform vec3 uFzAccent;
 uniform vec3 uFzDeep;
+uniform vec3 uTint;
+uniform float uTintMix;
 
 void main() {
   float flash = clamp(uFlash, 0.0, 1.0);
@@ -52,9 +55,15 @@ void main() {
   col = mix(col, uFzDeep, frz * mid * 0.25);
   col *= mix(1.0 + flash * 0.55, 1.05 + frz * 0.15, frz);
 
+  // Per-pattern signature tint, strongest at the flash core.
+  float tintW = clamp(uTintMix * (0.35 + 0.65 * flash + 0.2 * core), 0.0, 1.0);
+  col = mix(col, uTint * (0.85 + 0.6 * core), tintW);
+
   gl_FragColor = vec4(col, a);
 }
 `;
+
+const tmpTint = new THREE.Vector3();
 
 export default function CrossingFlash() {
   const mat = useRef<THREE.ShaderMaterial>(null);
@@ -68,6 +77,8 @@ export default function CrossingFlash() {
       uFzMid: { value: new THREE.Vector3(...sky.freeze.mid) },
       uFzAccent: { value: new THREE.Vector3(...sky.freeze.accent) },
       uFzDeep: { value: new THREE.Vector3(...sky.freeze.deep) },
+      uTint: { value: new THREE.Vector3(0.9, 0.96, 1.0) },
+      uTintMix: { value: 0.28 },
     }),
     [sky],
   );
@@ -90,6 +101,18 @@ export default function CrossingFlash() {
       mat.current.uniforms.uFreeze.value as number,
       getArrivalFreeze(),
       1 - Math.pow(0.02, dt),
+    );
+
+    const vis = getWarpDivePattern().visual;
+    const tint = mat.current.uniforms.uTint.value as THREE.Vector3;
+    tint.lerp(
+      tmpTint.set(vis.flashColor[0], vis.flashColor[1], vis.flashColor[2]),
+      ease,
+    );
+    mat.current.uniforms.uTintMix.value = THREE.MathUtils.lerp(
+      mat.current.uniforms.uTintMix.value as number,
+      vis.flashColorMix,
+      ease,
     );
   });
 

@@ -22,7 +22,7 @@ const AI_CRAWLERS = [
 export default function robots(): MetadataRoute.Robots {
   const site =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ??
-    'https://gentle-moss-08e107900.7.azurestaticapps.net';
+    'https://shimeji.blog';
 
   return {
     rules: [
@@ -30,6 +30,11 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: '*',
         allow: '/',
         disallow: ['/api/'],
+      },
+      // note リンクカード用クローラ（OG 取得）
+      {
+        userAgent: 'notebot',
+        allow: '/',
       },
       ...AI_CRAWLERS.map((userAgent) => ({
         userAgent,

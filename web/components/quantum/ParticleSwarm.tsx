@@ -1,25 +1,34 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { JourneyDirector } from '../journey/JourneyDirector';
 import type { JourneyStageId } from '../journey/timeline';
 import { glslNoise } from './noise.glsl';
 import { getActiveSky, mulberry32, type PickedSky } from './dailySky';
-import { getFieldTimeScale, resetSuction, tickSuction } from './suctionInput';
+import { getFieldTimeScale, getCrossing, resetSuction, tickSuction } from './suctionInput';
+import { getStarGenesis } from './voidGenesis';
+import { loadGlyphAtlas, PROSE_TARGET, type GlyphAtlas } from './glyphAtlas';
+import { getGlyphStars, subscribeGlyphStars } from './glyphStarsMode';
+import { resetProseField, setProseField } from './proseField';
 
 /**
  * Starfield motes (GPU points).
- * Idle: classic circular drift; tint/motion shift with the daily sky.
- * Long-press: dimensional warp — stars birth at the portal rim, fall forward
- * in depth, and streak radially outward; keep-out disk stays empty.
- * Full commit: colored bang choruses, then drift again.
+ * Glyph mode: same orbits as the starfield; each mote is a letter. On dive the
+ * whole field enlarges so drifting glyphs become readable — positions unchanged.
  */
-const DEFAULT_COUNT = 50000;
+const DEFAULT_COUNT = PROSE_TARGET;
 
 /** World-space radius around the portal where stars must not appear. */
 const CLEAR_RADIUS = 0.78;
+
+const EMPTY_TEX = (() => {
+  const t = new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1);
+  t.colorSpace = THREE.NoColorSpace;
+  t.needsUpdate = true;
+  return t;
+})();
 
 const vertex = /* glsl */ `
 attribute vec3 aSeed;
@@ -44,6 +53,14 @@ uniform float uNoiseAmp;
 uniform float uYPhase;
 uniform float uSpinSign;
 uniform float uRadiusJitter;
+uniform float uGenesis;
+uniform float uGlyphOn;
+uniform float uProse;
+uniform float uDissolve;
+uniform float uProseCount;
+attribute float aProse;
+attribute float aGlyphId;
+attribute float aOrder;
 varying float vDim;
 varying float vGlow;
 varying float vPick;
@@ -51,6 +68,9 @@ varying float vStreak;
 varying float vTemp;
 varying float vLum;
 varying float vTrailAng;
+varying float vGlyph;
+varying float vProseVis;
+varying float vSettle;
 
 ${glslNoise}
 
@@ -131,6 +151,9 @@ vec3 keepClear(vec3 p, float clearR) {
 }
 
 void main(){
+  vProseVis = 1.0;
+  vGlyph = 0.0;
+  vSettle = 0.0;
   float id = aSeed.x * 6.2831853;
   float shell = pow(aSeed.y, uShellPow);
   float speed = (0.006 + aSeed.z * 0.012) * uSpeedScale;
@@ -244,10 +267,24 @@ void main(){
 
   glowPop = max(glowPop, uGlow * step(0.02, suck + rest));
 
-  // Keep-out only while not collapsing into the aperture
+  // Boot: universe births from the portal — staggered outward bloom
+  float birth = fract(aSeed.x * 4.17 + aSeed.y * 2.91 + aSeed.z * 1.53);
+  float gGate = smoothstep(birth * 0.62, birth * 0.62 + 0.38, clamp(uGenesis, 0.0, 1.0));
+  gGate = gGate * gGate * (3.0 - 2.0 * gGate);
+  center = mix(vec3(0.0), center, gGate);
+
+  // Glyph reveal: keep starfield positions; dive only enlarges readability
+  float reveal = 0.0;
+  if (uGlyphOn > 0.5) {
+    float t = clamp(uProse, 0.0, 1.0);
+    reveal = t * t * (3.0 - 2.0 * t);
+  }
+
+  // Keep-out (same as classic starfield)
   float xyR = length(center.xy);
   float inClear =
-    (1.0 - smoothstep(clearR * 0.92, clearR, xyR)) * (1.0 - pinch);
+    (1.0 - smoothstep(clearR * 0.92, clearR, xyR))
+    * (1.0 - pinch);
 
   vec4 mv = modelViewMatrix * vec4(center, 1.0);
   gl_Position = projectionMatrix * mv;
@@ -259,12 +296,18 @@ void main(){
   float sz = mix(0.5, 1.25, mid) + lum * 2.9;
   sz = max(sz, step(0.001, rest) * (1.1 + lum * 2.2));
   sz *= 1.0 + streak * 4.2;
-  // Soft mote on the ring — large streaky points make a jagged crown
   sz *= mix(1.0, 0.45 + mid * 0.25, pinch);
   sz *= uSizeScale;
+  sz *= mix(1.0, 1.15, uGlyphOn);
   sz *= 2.4 * uPixelRatio;
   sz *= 1.0 - inClear;
-  gl_PointSize = clamp(sz * (2.8 / max(0.6, -mv.z)), 0.0, 80.0);
+  sz *= mix(0.15, 1.0, gGate);
+
+  float depthScale = 2.8 / max(0.55, -mv.z);
+  float starPx = clamp(sz * depthScale, 0.0, 80.0);
+  // Idle ≈ star size; dive enlarges the whole field so letters read
+  float enlarge = mix(1.0, 3.8, reveal);
+  gl_PointSize = clamp(starPx * enlarge, 0.0, 96.0);
 
   float calm = 1.0 - clamp(max(suck, rest) * 1.15, 0.0, 1.0);
   float twPhase = uTime * (1.15 + aSeed.x * 4.2) + aSeed.y * 6.28318;
@@ -274,12 +317,18 @@ void main(){
   vDim = baseDim * twinkle * (1.0 - inClear);
   vDim = max(vDim, glowPop * 0.9);
   vDim *= 1.0 + streak * 0.5;
+  vDim *= gGate;
+  // Slightly brighter as letters enlarge into focus
+  vDim *= mix(1.0, 1.25, reveal * uGlyphOn);
   vGlow = glowPop * (1.05 + lum * 0.85) * (1.0 - inClear);
   vPick = aSeed.x;
   vStreak = streak * (1.0 - inClear);
   vTemp = clamp(0.22 + fract(aSeed.z * 5.17 + aSeed.x * 2.63) * 0.78, 0.0, 1.0);
   vLum = lum;
   vTrailAng = trailAng;
+  vGlyph = aGlyphId;
+  vProseVis = uGlyphOn;
+  vSettle = mix(0.2, 1.0, reveal) * uGlyphOn;
 }
 `;
 
@@ -292,11 +341,20 @@ varying float vStreak;
 varying float vTemp;
 varying float vLum;
 varying float vTrailAng;
+varying float vGlyph;
+varying float vProseVis;
+varying float vSettle;
 uniform float uColors;
 uniform float uLayerOpacity;
 uniform vec3 uStarCool;
 uniform vec3 uStarWarm;
 uniform vec3 uStarHeat;
+uniform sampler2D uAtlas;
+uniform float uGlyphOn;
+uniform float uProse;
+uniform float uAtlasCols;
+uniform float uAtlasRows;
+uniform float uGlyphCount;
 
 vec3 paletteColor(float idx) {
   float i = floor(idx + 0.001);
@@ -321,32 +379,52 @@ void main(){
   vec2 uv = gl_PointCoord * 2.0 - 1.0;
   vec2 p = vec2(uv.x * ca + uv.y * sa, -uv.x * sa + uv.y * ca);
 
-  float thin = mix(1.0, 0.12, st);
+  // Warp streaks (glyph mode keeps orbits — no special meteor needles)
+  float meteor = step(0.001, st) * (1.0 - step(0.5, uGlyphOn));
+  float thin = mix(1.0, mix(0.12, 0.055, meteor), st);
   p.x /= thin;
   float d = length(p);
-  if (d > 1.2 && st < 0.02) discard;
+  if (d > 1.2 && st < 0.02 && uGlyphOn < 0.5) discard;
   if (abs(p.x) > 1.25 || abs(p.y) > 1.3) discard;
 
   float core = exp(-d * d * 7.0);
   float halo = exp(-d * d * mix(2.4, 1.6, vLum)) * mix(0.35, 0.55, vLum);
   float spark = pow(max(0.0, 1.0 - d), 10.0);
 
-  // Bright outer tip, soft afterimage toward portal (inward = -Y)
-  float tip = exp(-p.x * p.x * 24.0) * exp(-pow(max(0.0, p.y), 2.0) * 5.5);
-  float wake = exp(-p.x * p.x * mix(10.0, 32.0, st))
-    * exp(-pow(max(0.0, -p.y), 1.25) * mix(5.5, 0.9, st))
-    * smoothstep(1.2, -0.15, p.y);
-  float trail = mix(0.0, tip * 0.9 + wake, st);
+  // Bright head forward (+Y), long fading train behind
+  float tip = exp(-p.x * p.x * 28.0) * exp(-pow(max(0.0, p.y), 2.0) * 6.5);
+  float wake = exp(-p.x * p.x * mix(10.0, 36.0, st))
+    * exp(-pow(max(0.0, -p.y), mix(1.25, 0.85, meteor)) * mix(5.5, 0.35, st))
+    * smoothstep(mix(1.2, 1.55, meteor), -0.35, p.y);
+  float trail = mix(0.0, tip * 1.15 + wake * mix(1.0, 1.55, meteor), st);
+  trail *= 1.0 + meteor * 1.15;
 
   float shape = core + halo + spark * (0.35 + vLum * 0.35);
   shape = max(shape * (1.0 - st * 0.6), trail);
 
+  // Glyph mode: always glyph-shaped (prose never waits to "ink in")
+  if (uGlyphOn > 0.5) {
+    float gi = floor(vGlyph + 0.001);
+    float gcol = mod(gi, uAtlasCols);
+    float grow = floor(gi / uAtlasCols);
+    float pad = mix(0.04, 0.01, vSettle);
+    vec2 gp = clamp(gl_PointCoord, 0.001 + pad, 0.999 - pad);
+    gp = (gp - 0.5) / mix(0.82, 0.92, vSettle) + 0.5;
+    gp = clamp(gp, 0.001, 0.999);
+    vec2 cell = (vec2(gcol, grow) + gp) / vec2(uAtlasCols, uAtlasRows);
+    float glyph = texture2D(uAtlas, cell).a;
+    float edge = mix(0.32, 0.52, vSettle);
+    float glyphShape = smoothstep(0.06, edge, glyph) * (1.05 + vLum * 0.35)
+      + core * mix(0.18, 0.08, vSettle);
+    shape = mix(shape, glyphShape, 1.0);
+  }
+
   vec3 tint;
   float n = floor(uColors + 0.001);
   if (n < 1.0) {
-    // Daily sky tint; warp heat leans without washing to white
     vec3 cool = mix(uStarCool, uStarWarm, clamp(vDim * 1.1, 0.0, 1.0));
-    tint = mix(cool, uStarHeat, clamp(st * 0.85, 0.0, 1.0));
+    float heat = clamp(st * 0.85 + meteor * st * 0.55, 0.0, 1.0);
+    tint = mix(cool, uStarHeat, heat);
   } else {
     float slot = floor(fract(vPick * 1.718) * n);
     tint = paletteColor(slot);
@@ -382,31 +460,70 @@ export default function ParticleSwarm({
 }: ParticleSwarmProps = {}) {
   const mat = useRef<THREE.ShaderMaterial>(null);
   const fieldTime = useRef(0);
+  const typeAge = useRef(0);
   const sky = skyProp ?? getActiveSky();
-  const particleCount = Math.max(
-    500,
-    Math.floor(count * (journey ? 1 : sky.densityScale)),
-  );
+  const [atlas, setAtlas] = useState<GlyphAtlas | null>(null);
+  // When atlas is ready, use every prose letter (full ~50k field).
+  const particleCount = atlas?.letters.length
+    ? atlas.letters.length
+    : Math.max(
+        500,
+        Math.floor(count * (journey ? 1 : sky.densityScale)),
+      );
 
   useEffect(() => {
     if (journey) return;
     resetSuction();
+    resetProseField();
     fieldTime.current = 0;
-    return () => resetSuction();
+    typeAge.current = 0;
+    return () => {
+      resetSuction();
+      resetProseField();
+    };
   }, [journey]);
 
-  const { positions, seeds } = useMemo(() => {
+  useEffect(() => {
+    if (journey) return;
+    let alive = true;
+    loadGlyphAtlas()
+      .then((a) => {
+        if (alive) setAtlas(a);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [journey]);
+
+  const { positions, seeds, proseFlags, glyphIds, orders } = useMemo(() => {
     const rng = mulberry32(sky.seed ^ 0x5f3759df);
     const positions = new Float32Array(particleCount * 3);
     const seeds = new Float32Array(particleCount * 3);
-    // Flat shell draw — uShellPow reshapes radial density in the shader
+    const proseFlags = new Float32Array(particleCount);
+    const glyphIds = new Float32Array(particleCount);
+    const orders = new Float32Array(particleCount);
+    const letters = atlas?.letters ?? [];
+    const atlasCount = Math.max(1, atlas?.count ?? 1);
+    const proseN = letters.length;
+
     for (let i = 0; i < particleCount; i++) {
       seeds[i * 3 + 0] = rng();
       seeds[i * 3 + 1] = rng();
       seeds[i * 3 + 2] = rng();
+      if (i < proseN) {
+        const L = letters[i]!;
+        proseFlags[i] = 1;
+        glyphIds[i] = L.atlasIndex;
+        orders[i] = L.order;
+      } else {
+        proseFlags[i] = 0;
+        glyphIds[i] = Math.floor(rng() * atlasCount);
+        orders[i] = 0;
+      }
     }
-    return { positions, seeds };
-  }, [particleCount, sky.seed]);
+    return { positions, seeds, proseFlags, glyphIds, orders };
+  }, [particleCount, sky.seed, atlas]);
 
   const uniforms = useMemo(
     () => ({
@@ -435,9 +552,37 @@ export default function ParticleSwarm({
       uYPhase: { value: sky.field.yPhase },
       uSpinSign: { value: sky.field.spinSign },
       uRadiusJitter: { value: sky.field.radiusJitter },
+      uGenesis: { value: 1 },
+      uAtlas: { value: EMPTY_TEX },
+      uGlyphOn: { value: 0 },
+      uAtlasCols: { value: 16 },
+      uAtlasRows: { value: 1 },
+      uGlyphCount: { value: 1 },
+      uProse: { value: 0 },
+      uDissolve: { value: 0 },
+      uProseCount: { value: 1 },
     }),
     [sky],
   );
+
+  useEffect(() => {
+    if (journey) return;
+    const applyGlyphFlag = () => {
+      if (!mat.current) return;
+      mat.current.uniforms.uGlyphOn.value =
+        atlas && getGlyphStars() ? 1 : 0;
+    };
+    if (atlas && mat.current) {
+      const un = mat.current.uniforms;
+      un.uAtlas.value = atlas.texture;
+      un.uAtlasCols.value = atlas.cols;
+      un.uAtlasRows.value = atlas.rows;
+      un.uGlyphCount.value = atlas.count;
+      un.uProseCount.value = atlas.letters.length;
+    }
+    applyGlyphFlag();
+    return subscribeGlyphStars(applyGlyphFlag);
+  }, [journey, atlas]);
 
   useFrame((state, delta) => {
     if (!mat.current) return;
@@ -454,7 +599,19 @@ export default function ParticleSwarm({
       un.uGlow.value = frame.progress * 0.35;
       un.uColors.value = 0;
       un.uLayerOpacity.value = frame.weight;
+      un.uGenesis.value = 1;
+      un.uProse.value = 0;
+      un.uDissolve.value = 0;
+      setProseField(0);
       return;
+    }
+
+    if (atlas) {
+      un.uAtlas.value = atlas.texture;
+      un.uAtlasCols.value = atlas.cols;
+      un.uAtlasRows.value = atlas.rows;
+      un.uGlyphCount.value = atlas.count;
+      un.uProseCount.value = atlas.letters.length;
     }
 
     const frame = tickSuction(d);
@@ -463,12 +620,38 @@ export default function ParticleSwarm({
     }
     fieldTime.current += d * getFieldTimeScale();
     un.uTime.value = fieldTime.current;
+
     un.uSuck.value =
       frame.phase === 'restoring' ? 0 : frame.phase === 'crossing' ? 1 : frame.strength;
     un.uRestore.value = frame.restore;
     un.uGlow.value = frame.glow;
     un.uColors.value = frame.cycle;
     un.uLayerOpacity.value = 1;
+    un.uGenesis.value = getStarGenesis();
+
+    // Glyph mode: enlarge drifting letters on dive (positions stay starfield)
+    const glyph = (un.uGlyphOn.value as number) > 0.5;
+    let prose = 0;
+    if (glyph) {
+      const typing = frame.phase === 'sucking' || frame.phase === 'crossing';
+      const typeSec = 2.8;
+      if (typing) {
+        typeAge.current = Math.min(typeAge.current + d, typeSec);
+        prose = typeAge.current / typeSec;
+      } else {
+        typeAge.current = Math.max(0, typeAge.current - d * 2.2);
+        prose = typeAge.current / typeSec;
+      }
+      if (frame.phase === 'crossing') {
+        prose = 1;
+        typeAge.current = typeSec;
+      }
+    } else {
+      typeAge.current = 0;
+    }
+    un.uProse.value = prose;
+    un.uDissolve.value = 0;
+    setProseField(glyph ? prose : 0);
   }, -1);
 
   return (
@@ -476,6 +659,9 @@ export default function ParticleSwarm({
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
         <bufferAttribute attach="attributes-aSeed" args={[seeds, 3]} />
+        <bufferAttribute attach="attributes-aProse" args={[proseFlags, 1]} />
+        <bufferAttribute attach="attributes-aGlyphId" args={[glyphIds, 1]} />
+        <bufferAttribute attach="attributes-aOrder" args={[orders, 1]} />
       </bufferGeometry>
       <shaderMaterial
         ref={mat}

@@ -11,6 +11,7 @@ import {
   getStillness,
 } from './suctionInput';
 import { getActiveSky } from './dailySky';
+import { getWarpDivePattern } from './warpPattern';
 
 const BASE_POS = new THREE.Vector3(0, 0.15, 4.2);
 const WARP_POS = new THREE.Vector3(0, 0.06, 2.35);
@@ -45,9 +46,10 @@ export default function WarpCamera() {
     }
     fly = Math.min(1, fly + glow * 0.04);
 
+    const punch = getWarpDivePattern().visual.camPunch;
     const persp = camera as THREE.PerspectiveCamera;
     const targetFov =
-      THREE.MathUtils.lerp(BASE_FOV, WARP_FOV, fly) + flash * 6 - still * 1.5;
+      THREE.MathUtils.lerp(BASE_FOV, WARP_FOV, fly) + flash * 6 * punch - still * 1.5;
     persp.fov = THREE.MathUtils.lerp(
       persp.fov,
       THREE.MathUtils.clamp(targetFov, 32, 68),
@@ -56,7 +58,7 @@ export default function WarpCamera() {
     persp.updateProjectionMatrix();
 
     tmp.current.lerpVectors(BASE_POS, WARP_POS, fly);
-    tmp.current.z -= flash * 0.08;
+    tmp.current.z -= flash * 0.08 * punch;
 
     // Soft breath + late-stage tremor as the gate opens (hushed during E)
     shake.current = THREE.MathUtils.lerp(
@@ -71,11 +73,19 @@ export default function WarpCamera() {
     camera.position.lerp(tmp.current, 1 - Math.pow(0.0008, dt));
     camera.lookAt(0, 0, 0);
 
+    // Maelstrom: roll the whole frame about the view axis as it spins inward.
+    const rollVis = getWarpDivePattern().visual;
+    const roll =
+      (rollVis.cameraRoll ?? 0) * fly + (rollVis.vortex ?? 0) * t * 0.5 * fly;
+    if (roll !== 0) camera.rotateZ(roll);
+
     const baseExposure = getActiveSky().exposure;
     const warpExposure = Math.max(0.55, baseExposure - 0.2);
+    const vis = getWarpDivePattern().visual;
     const exposure =
       THREE.MathUtils.lerp(baseExposure, warpExposure, fly * 0.85) +
-      flash * 0.9 -
+      flash * 0.9 * punch +
+      fly * vis.exposureLift -
       still * 0.06;
     gl.toneMappingExposure = THREE.MathUtils.lerp(
       gl.toneMappingExposure,

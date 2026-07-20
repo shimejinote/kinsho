@@ -4,7 +4,7 @@ export const dynamic = 'force-static';
 
 const site =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') ??
-  'https://gentle-moss-08e107900.7.azurestaticapps.net';
+  'https://shimeji.blog';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
@@ -37,6 +37,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.6,
+    },
+    {
+      url: `${site}/breakout/`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.7,
     },
   ];
 }

@@ -358,6 +358,10 @@ export type PickedSky = VoidSky & {
   key: string;
   field: FieldLayout;
   freeze: FreezePalette;
+  /** Soft nebula blooms (CSS background-image stack). */
+  cssNebula: string;
+  /** Edge falloff over nebula. */
+  cssVeil: string;
 };
 
 let activeSky: PickedSky | null = null;
@@ -383,6 +387,82 @@ function rgbTuple(r: number, g: number, b: number): [number, number, number] {
 
 function rgbaCss(c: [number, number, number], a: number) {
   return `rgba(${Math.round(c[0] * 255)}, ${Math.round(c[1] * 255)}, ${Math.round(c[2] * 255)}, ${a})`;
+}
+
+function hexFromRgb(c: [number, number, number]) {
+  const h = (n: number) =>
+    Math.round(Math.min(1, Math.max(0, n)) * 255)
+      .toString(16)
+      .padStart(2, '0');
+  return `#${h(c[0])}${h(c[1])}${h(c[2])}`;
+}
+
+/**
+ * Per-visit space backdrop: deep well + soft nebula blooms from sky tints.
+ * Positions/sizes jitter with the visit seed so the same mood still varies.
+ */
+function buildSpaceBackdrop(sky: VoidSky, rng: () => number) {
+  const deep = sky.background;
+  const cool = sky.starCool;
+  const warm = sky.starWarm;
+  const heat = sky.starHeat;
+
+  const base = [
+    `radial-gradient(ellipse 130% 100% at 50% 38%, ${rgbaCss(
+      [
+        Math.min(1, deep[0] * 2.8 + 0.02),
+        Math.min(1, deep[1] * 2.8 + 0.02),
+        Math.min(1, deep[2] * 2.8 + 0.04),
+      ],
+      1,
+    )} 0%, ${hexFromRgb(deep)} 42%, #010104 78%, #000000 100%)`,
+  ].join(',');
+
+  const blooms = [
+    {
+      x: mix(8, 42, rng()),
+      y: mix(6, 40, rng()),
+      w: mix(48, 88, rng()),
+      h: mix(40, 78, rng()),
+      c: cool,
+      a: mix(0.14, 0.28, rng()),
+    },
+    {
+      x: mix(55, 94, rng()),
+      y: mix(35, 88, rng()),
+      w: mix(42, 80, rng()),
+      h: mix(38, 72, rng()),
+      c: warm,
+      a: mix(0.1, 0.22, rng()),
+    },
+    {
+      x: mix(20, 78, rng()),
+      y: mix(45, 95, rng()),
+      w: mix(36, 70, rng()),
+      h: mix(32, 64, rng()),
+      c: heat,
+      a: mix(0.06, 0.16, rng()),
+    },
+    {
+      x: mix(30, 70, rng()),
+      y: mix(0, 28, rng()),
+      w: mix(55, 95, rng()),
+      h: mix(28, 50, rng()),
+      c: cool,
+      a: mix(0.05, 0.12, rng()),
+    },
+  ];
+
+  const nebula = blooms
+    .map(
+      (b) =>
+        `radial-gradient(${b.w}% ${b.h}% at ${b.x}% ${b.y}%, ${rgbaCss(b.c, b.a)} 0%, ${rgbaCss(b.c, b.a * 0.35)} 32%, transparent 68%)`,
+    )
+    .join(',');
+
+  const veil = `radial-gradient(ellipse 90% 70% at 50% 55%, transparent 30%, ${rgbaCss(deep, 0.55)} 100%)`;
+
+  return { cssBg: base, cssNebula: nebula, cssVeil: veil };
 }
 
 function pickField(rng: () => number): FieldLayout {
@@ -490,8 +570,12 @@ export function pickRandomSky(): PickedSky {
     ((performance.now() * 1000) >>> 0);
   const rng = mulberry32(seed);
   const sky = SKIES[Math.floor(rng() * SKIES.length)]!;
+  const space = buildSpaceBackdrop(sky, rng);
   activeSky = {
     ...sky,
+    cssBg: space.cssBg,
+    cssNebula: space.cssNebula,
+    cssVeil: space.cssVeil,
     seed,
     key: `r-${seed.toString(16)}`,
     field: pickField(rng),
