@@ -34,9 +34,10 @@ if (-not $SkipUpload) {
     throw "Missing GLB at $src — place the model locally once, then sync."
   }
   Write-Host "Uploading $src → $blobBase/$dest"
+  $key = az storage account keys list -n $account -g $ResourceGroup --query '[0].value' -o tsv
   az storage blob upload `
     --account-name $account `
-    --auth-mode login `
+    --account-key $key `
     --container-name media `
     --name $dest `
     --file $src `

@@ -64,11 +64,16 @@ jobs:
 
           SRC="web/public/assets/noumai-maker/head_allen_fit.glb"
           DEST="noumai/head_allen_fit.glb"
+          # Contributor on RG can list keys; Blob Data roles are not required.
+          ACCOUNT_KEY="$(az storage account keys list \
+            -n "${MEDIA_ACCOUNT}" \
+            -g "${AZURE_RESOURCE_GROUP}" \
+            --query "[0].value" -o tsv)"
           if [ -f "${SRC}" ]; then
             echo "Uploading ${SRC} → ${DEST}"
             az storage blob upload \
               --account-name "${MEDIA_ACCOUNT}" \
-              --auth-mode login \
+              --account-key "${ACCOUNT_KEY}" \
               --container-name media \
               --name "${DEST}" \
               --file "${SRC}" \
@@ -78,7 +83,7 @@ jobs:
             echo "Local GLB absent — expecting existing blob at ${BLOB_BASE}/${DEST}"
             az storage blob show \
               --account-name "${MEDIA_ACCOUNT}" \
-              --auth-mode login \
+              --account-key "${ACCOUNT_KEY}" \
               --container-name media \
               --name "${DEST}" \
               --query "name" -o tsv >/dev/null
