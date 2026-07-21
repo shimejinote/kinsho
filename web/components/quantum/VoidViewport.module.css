@@ -1,0 +1,225 @@
+/* Cockpit viewport: thick hull edge, glass oval, quiet reflections. */
+
+.root {
+  --vp-inset: clamp(0.7rem, 2.4vw, 1.85rem);
+  --vp-radius: clamp(1.6rem, 5vw, 3.4rem);
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  overflow: hidden;
+}
+
+/* Dark hull pressing in from the edges — looking through a thick window. */
+.hull {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 78% 72% at 50% 48%,
+      transparent 42%,
+      rgba(2, 4, 8, 0.18) 58%,
+      rgba(1, 2, 5, 0.72) 78%,
+      rgba(0, 0, 0, 0.94) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(4, 6, 10, 0.55) 0%,
+      transparent 14%,
+      transparent 86%,
+      rgba(2, 3, 6, 0.7) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(3, 4, 8, 0.62) 0%,
+      transparent 10%,
+      transparent 90%,
+      rgba(3, 4, 8, 0.62) 100%
+    );
+}
+
+/* Metal lip of the viewport — soft inset bevel, not a hard UI border. */
+.rim {
+  position: absolute;
+  inset: var(--vp-inset);
+  border-radius: var(--vp-radius);
+  box-shadow:
+    inset 0 0 0 1px rgba(180, 198, 220, 0.14),
+    inset 0 0 0 2px rgba(8, 10, 16, 0.55),
+    inset 0 1px 0 rgba(220, 230, 245, 0.12),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+/* Thickness of glass at the cutout edge. */
+.rim::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: calc(var(--vp-radius) - 3px);
+  box-shadow:
+    inset 0 0 28px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(140, 160, 190, 0.06);
+}
+
+/* Glass body: cool refraction veil that stays light in the center. */
+.glass {
+  position: absolute;
+  inset: var(--vp-inset);
+  border-radius: var(--vp-radius);
+  background:
+    radial-gradient(
+      ellipse 70% 62% at 50% 46%,
+      rgba(160, 190, 230, 0.03) 0%,
+      transparent 55%
+    ),
+    linear-gradient(
+      165deg,
+      rgba(210, 225, 245, 0.07) 0%,
+      transparent 28%,
+      transparent 72%,
+      rgba(40, 55, 80, 0.08) 100%
+    );
+  mix-blend-mode: screen;
+  opacity: 0.85;
+}
+
+/* Slow drifting specular — cabin light on the pane. */
+.sheen {
+  position: absolute;
+  inset: var(--vp-inset);
+  border-radius: var(--vp-radius);
+  overflow: hidden;
+  opacity: 0.55;
+}
+
+.sheen::before {
+  content: '';
+  position: absolute;
+  top: -8%;
+  left: -15%;
+  width: 70%;
+  height: 42%;
+  background: linear-gradient(
+    125deg,
+    rgba(230, 240, 255, 0.16) 0%,
+    rgba(180, 205, 240, 0.05) 38%,
+    transparent 68%
+  );
+  filter: blur(1px);
+  transform-origin: 30% 20%;
+  animation: vp-sheen 18s ease-in-out infinite alternate;
+}
+
+.sheen::after {
+  content: '';
+  position: absolute;
+  right: 8%;
+  bottom: 12%;
+  width: 38%;
+  height: 22%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(140, 170, 220, 0.07) 0%,
+    transparent 70%
+  );
+  animation: vp-sheen-soft 22s ease-in-out infinite alternate;
+}
+
+/* Micro dust / frost on the glass — barely there. */
+.dust {
+  position: absolute;
+  inset: var(--vp-inset);
+  border-radius: var(--vp-radius);
+  opacity: 0.22;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1px 1px at 28% 72%, rgba(255, 255, 255, 0.25), transparent),
+    radial-gradient(1px 1px at 61% 24%, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(1px 1px at 78% 58%, rgba(255, 255, 255, 0.22), transparent),
+    radial-gradient(1.5px 1px at 44% 41%, rgba(255, 255, 255, 0.18), transparent),
+    radial-gradient(1px 1px at 88% 31%, rgba(255, 255, 255, 0.28), transparent),
+    radial-gradient(1px 1px at 19% 48%, rgba(255, 255, 255, 0.2), transparent);
+  mix-blend-mode: soft-light;
+  animation: vp-dust 28s linear infinite alternate;
+}
+
+/* Hull corner plates — structural, not HUD chrome. */
+.corner {
+  position: absolute;
+  width: clamp(1.4rem, 4vw, 2.4rem);
+  height: clamp(1.4rem, 4vw, 2.4rem);
+  border: 1px solid rgba(170, 190, 215, 0.16);
+  opacity: 0.7;
+}
+
+.corner[data-c='tl'] {
+  top: calc(var(--vp-inset) - 2px);
+  left: calc(var(--vp-inset) - 2px);
+  border-right: none;
+  border-bottom: none;
+  border-radius: calc(var(--vp-radius) * 0.55) 0 0 0;
+}
+
+.corner[data-c='tr'] {
+  top: calc(var(--vp-inset) - 2px);
+  right: calc(var(--vp-inset) - 2px);
+  border-left: none;
+  border-bottom: none;
+  border-radius: 0 calc(var(--vp-radius) * 0.55) 0 0;
+}
+
+.corner[data-c='bl'] {
+  bottom: calc(var(--vp-inset) - 2px);
+  left: calc(var(--vp-inset) - 2px);
+  border-right: none;
+  border-top: none;
+  border-radius: 0 0 0 calc(var(--vp-radius) * 0.55);
+}
+
+.corner[data-c='br'] {
+  bottom: calc(var(--vp-inset) - 2px);
+  right: calc(var(--vp-inset) - 2px);
+  border-left: none;
+  border-top: none;
+  border-radius: 0 0 calc(var(--vp-radius) * 0.55) 0;
+}
+
+@keyframes vp-sheen {
+  from {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+    opacity: 0.85;
+  }
+  to {
+    transform: translate3d(6%, 3%, 0) rotate(1.2deg);
+    opacity: 1;
+  }
+}
+
+@keyframes vp-sheen-soft {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.7;
+  }
+  to {
+    transform: translate3d(-4%, -5%, 0) scale(1.08);
+    opacity: 1;
+  }
+}
+
+@keyframes vp-dust {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(0.4%, -0.5%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheen::before,
+  .sheen::after,
+  .dust {
+    animation: none;
+  }
+}

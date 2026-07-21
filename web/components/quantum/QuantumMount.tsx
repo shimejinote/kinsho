@@ -7,8 +7,9 @@ import appsStyles from '../apps/CyberpunkAppsIndex.module.css';
 import { getActiveSky } from './dailySky';
 import { isNoteInbound } from './noteInbound';
 import NoteBridge from './NoteBridge';
-import WarpDebugPanel from './WarpDebugPanel';
 import GlyphStarsToggle from './GlyphStarsToggle';
+import VoidBrandMark from './VoidBrandMark';
+import VoidViewport from './VoidViewport';
 import {
   consumeArrival,
   holdArrivalFreeze,
@@ -49,9 +50,39 @@ export default function QuantumMount() {
 
   const onNoteDone = useCallback(() => setNoteBridge(false), []);
 
+  /** Jump straight to apps — skips warp / freeze / iris handoff. */
+  const skipToApps = useCallback(() => {
+    settleAfterArrival();
+    setVeilMounted(false);
+    setVeilOut(false);
+    setAppsMounted(true);
+    setVoidLive(false);
+    setNoteBridge(false);
+    setPhase('apps');
+  }, []);
+
   useEffect(() => {
     if (isNoteInbound()) setNoteBridge(true);
   }, []);
+
+  // Triple-click (or triple-tap) on the void → skip the warp ritual.
+  useEffect(() => {
+    if (phase !== 'void') return;
+    const onClick = (e: MouseEvent) => {
+      if (e.detail < 3) return;
+      const t = e.target;
+      if (
+        t instanceof Element &&
+        t.closest('button, a, input, textarea, [role="button"]')
+      ) {
+        return;
+      }
+      e.preventDefault();
+      skipToApps();
+    };
+    window.addEventListener('click', onClick);
+    return () => window.removeEventListener('click', onClick);
+  }, [phase, skipToApps]);
 
   useEffect(() => {
     if (phase !== 'void') return;
@@ -146,7 +177,8 @@ export default function QuantumMount() {
 
       {noteBridge ? <NoteBridge onDone={onNoteDone} /> : null}
 
-      {phase === 'void' && voidLive ? <WarpDebugPanel /> : null}
+      {phase === 'void' && voidLive ? <VoidViewport /> : null}
+      {phase === 'void' && voidLive ? <VoidBrandMark /> : null}
       {phase === 'void' && voidLive ? <GlyphStarsToggle /> : null}
 
       {veilMounted ? (

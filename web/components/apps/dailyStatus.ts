@@ -1,5 +1,5 @@
 /**
- * Everyday status for the lab console — clock, day progress, network, tips.
+ * Everyday status — clock and calendar progress (day / week / month / year).
  */
 
 import { LIFE_TIPS } from './appsData';
@@ -12,6 +12,9 @@ export type DailyStatus = {
   weekday: string;
   timezone: string;
   dayProgress: number;
+  weekProgress: number;
+  monthProgress: number;
+  yearProgress: number;
   minutesToNextHour: number;
   phase: DayPhase;
   phaseLabel: string;
@@ -22,6 +25,8 @@ export type DailyStatus = {
 };
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'] as const;
+const DAY_MS = 86_400_000;
+const WEEK_MS = 7 * DAY_MS;
 
 function pad(n: number) {
   return String(n).padStart(2, '0');
@@ -35,6 +40,39 @@ function phaseOf(hour: number): { phase: DayPhase; label: string } {
   return { phase: 'night', label: '夜' };
 }
 
+/** Monday-start week (0 = Mon … 6 = Sun). */
+function mondayIndex(day: number) {
+  return day === 0 ? 6 : day - 1;
+}
+
+function startOfLocalDay(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
+function calendarProgress(now: Date) {
+  const y = now.getFullYear();
+  const month = now.getMonth();
+  const daySec =
+    now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+  const dayProgress = (daySec / 86_400) * 100;
+
+  const weekElapsed =
+    mondayIndex(now.getDay()) * DAY_MS + (now.getTime() - startOfLocalDay(now));
+  const weekProgress = (weekElapsed / WEEK_MS) * 100;
+
+  const monthStart = new Date(y, month, 1).getTime();
+  const monthEnd = new Date(y, month + 1, 1).getTime();
+  const monthProgress =
+    ((now.getTime() - monthStart) / (monthEnd - monthStart)) * 100;
+
+  const yearStart = new Date(y, 0, 1).getTime();
+  const yearEnd = new Date(y + 1, 0, 1).getTime();
+  const yearProgress =
+    ((now.getTime() - yearStart) / (yearEnd - yearStart)) * 100;
+
+  return { dayProgress, weekProgress, monthProgress, yearProgress };
+}
+
 export function createIdleDailyStatus(): DailyStatus {
   return {
     time: '--:--:--',
@@ -42,6 +80,9 @@ export function createIdleDailyStatus(): DailyStatus {
     weekday: '—',
     timezone: '—',
     dayProgress: 0,
+    weekProgress: 0,
+    monthProgress: 0,
+    yearProgress: 0,
     minutesToNextHour: 0,
     phase: 'day',
     phaseLabel: '—',
@@ -60,7 +101,8 @@ export function buildDailyStatus(
   const m = now.getMinutes();
   const s = now.getSeconds();
   const { phase, label } = phaseOf(h);
-  const dayProgress = ((h * 3600 + m * 60 + s) / 86400) * 100;
+  const { dayProgress, weekProgress, monthProgress, yearProgress } =
+    calendarProgress(now);
   const remSec = 3600 - (m * 60 + s);
   const minutesToNextHour = Math.max(1, Math.ceil(remSec / 60));
   const dayKey =
@@ -77,6 +119,9 @@ export function buildDailyStatus(
       Intl.DateTimeFormat().resolvedOptions().timeZone?.replace(/_/g, ' ') ??
       'local',
     dayProgress,
+    weekProgress,
+    monthProgress,
+    yearProgress,
     minutesToNextHour,
     phase,
     phaseLabel: label,

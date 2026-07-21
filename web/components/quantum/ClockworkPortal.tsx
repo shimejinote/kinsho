@@ -34,8 +34,9 @@ void main() {
 `;
 
 /**
- * Void seal — frame/ring light preserved.
- * Idle: maelstrom core. Long-press: opens as a dimensional warp gate.
+ * Void seal — black-hole aperture with photon-ring light.
+ * Idle: maelstrom core. Long-press: opens as a dimensional warp gate;
+ * light paths twist harder as suction deepens.
  */
 const frag = /* glsl */ `
 precision highp float;
@@ -60,12 +61,12 @@ void main() {
   float swirlZone = smoothstep(0.5, 0.4, r0) * smoothstep(0.0, 0.1, r0);
   float spin = uTime * (0.85 + uHover * 0.7 + boost * 2.2);
 
-  // --- Dimensional aperture (deepens while warping) ---
-  float pull = pow(smoothstep(0.48, 0.0, r0), 1.35) * (1.0 + boost * 0.8);
-  float twist = (1.8 + 4.5 * pull + boost * 5.0) * spin * 0.35;
-  float r = r0 + pull * (0.12 + boost * 0.08) * sin(ang0 * 4.0 - spin * 2.0);
-  r = max(r * (1.0 - pull * (0.55 + boost * 0.2)), 0.001);
-  float ang = ang0 + log(r0 * 6.0 + 0.15) * (2.8 + boost * 1.6) - twist - pull * 3.5;
+  // Gravitational UV warp — light bends harder near the horizon
+  float pull = pow(smoothstep(0.48, 0.0, r0), 1.35) * (1.0 + boost * 1.15);
+  float twist = (1.8 + 5.5 * pull + boost * 6.5) * spin * 0.35;
+  float r = r0 + pull * (0.14 + boost * 0.12) * sin(ang0 * 4.0 - spin * 2.0);
+  r = max(r * (1.0 - pull * (0.6 + boost * 0.28)), 0.001);
+  float ang = ang0 + log(r0 * 6.0 + 0.15) * (2.8 + boost * 2.2) - twist - pull * 4.2;
 
   float grooves = 0.0;
   grooves += pow(0.5 + 0.5 * sin(ang * (6.0 + boost * 4.0) + log(r) * 7.0), 3.2);
@@ -86,16 +87,19 @@ void main() {
   float core = 1.0 - smoothstep(0.18, 0.34, r0);
   core = max(core, maelstrom * 0.9 + drain * 0.85);
 
-  float ringR = mix(0.48, 0.44, boost);
-  float ring = exp(-pow((r0 - ringR) * 38.0, 2.0));
+  // Photon ring — thin bright critical orbit (Einstein ring cue)
+  float ringR = mix(0.48, 0.42, boost);
+  float ring = exp(-pow((r0 - ringR) * mix(38.0, 52.0, boost), 2.0));
+  float photon = exp(-pow((r0 - mix(0.40, 0.36, boost)) * 70.0, 2.0)) * boost;
   float travel = 0.55 + 0.45 * sin(ang0 * 2.0 - uTime * (1.4 + boost * 1.2));
 
   // Idle warm brass → warp: cool rift rim (other-dimension gate)
   vec3 ringWarm = vec3(0.92, 0.58, 0.22);
-  vec3 ringRift = vec3(0.45, 0.72, 1.0);
+  vec3 ringRift = vec3(0.55, 0.78, 1.0);
   vec3 ringCol = mix(ringWarm, ringRift, boost * 0.85) * ring * (0.65 + 0.5 * travel);
-  ringCol += mix(vec3(1.0, 0.85, 0.55), vec3(0.85, 0.7, 1.0), boost)
-    * pow(ring, 1.8) * travel * (0.55 + boost * 0.35);
+  ringCol += mix(vec3(1.0, 0.85, 0.55), vec3(0.9, 0.82, 1.0), boost)
+    * pow(ring, 1.8) * travel * (0.55 + boost * 0.45);
+  ringCol += vec3(0.95, 0.9, 1.0) * photon * (1.1 + travel * 0.5);
 
   float lip = exp(-pow((r0 - 0.36) * 28.0, 2.0)) * 0.35;
   lip *= 1.0 - swirlZone * grooves * (0.35 + boost * 0.25);
@@ -120,21 +124,24 @@ void main() {
   float ridge = smoothstep(0.35, 0.75, grooves) * (1.0 - drain);
   bruise += vec3(0.14, 0.05, 0.02) * ridge * swirlZone * (0.25 + boost * 0.2);
 
-  // Deep void aperture — reads as other space beyond the seal
-  float aperture = pow(smoothstep(0.42, 0.0, r0), 1.4) * (0.55 + boost * 0.7);
-  vec3 beyond = vec3(0.02, 0.03, 0.08) * aperture;
-  beyond += vec3(0.12, 0.05, 0.28) * aperture * boost * (0.4 + 0.6 * grooves);
+  // Event horizon — pure void past the photon ring
+  float aperture = pow(smoothstep(0.42, 0.0, r0), 1.4) * (0.55 + boost * 0.85);
+  float horizon = pow(smoothstep(0.28, 0.0, r0), 1.8) * boost;
+  vec3 beyond = vec3(0.015, 0.02, 0.055) * aperture * (1.0 - horizon);
+  beyond += vec3(0.1, 0.04, 0.22) * aperture * boost * (0.35 + 0.55 * grooves) * (1.0 - horizon);
 
   vec3 col = bruise + beyond;
   col += lipCol + ringCol + haloCol + orbitCol + coronaCol;
 
-  col *= 1.0 - core * (0.97 + boost * 0.02);
+  // Deepen the hole — swallow light inside the critical orbit
+  col *= 1.0 - core * (0.97 + boost * 0.025);
+  col *= 1.0 - horizon * 0.98;
   col *= 1.0 - maelstrom * (0.75 + drain * 0.35 + boost * 0.15);
   col *= 1.0 - streaks * swirlZone * (0.45 + boost * 0.25);
 
-  float alpha = max(core * 0.98, ring * 1.4 + lip + halo * 1.2 + orbit2);
+  float alpha = max(core * 0.98, ring * 1.4 + photon * 1.6 + lip + halo * 1.2 + orbit2);
   alpha = max(alpha, swirlZone * (0.88 + maelstrom * 0.2));
-  alpha = max(alpha, corona * 1.1 + aperture * 0.35 * boost);
+  alpha = max(alpha, corona * 1.1 + aperture * 0.4 * boost + horizon * 0.92);
   alpha *= veil;
   alpha *= clamp(uReveal, 0.0, 1.0);
   alpha = clamp(alpha * (0.85 + 0.2 * uHover + boost * 0.12), 0.0, 1.0);

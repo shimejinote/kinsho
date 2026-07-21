@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import {
   Hina_Mincho,
   Shippori_Mincho,
+  Yomogi,
   Zen_Kaku_Gothic_New,
 } from 'next/font/google';
 import { getSiteUrl } from '@/lib/siteUrl';
@@ -24,6 +25,14 @@ const hina = Hina_Mincho({
   display: 'swap',
   adjustFontFallback: false,
   preload: true,
+});
+
+/** Loose handwritten face for quiet brand marks. */
+const yomogi = Yomogi({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-yomogi',
+  display: 'swap',
 });
 
 const zen = Zen_Kaku_Gothic_New({
@@ -69,6 +78,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
   themeColor: '#04060a',
   colorScheme: 'dark',
 };
@@ -77,7 +89,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="ja"
-      className={`${shippori.variable} ${hina.variable} ${zen.variable}`}
+      className={`${shippori.variable} ${hina.variable} ${yomogi.variable} ${zen.variable}`}
     >
       <body className="min-h-dvh antialiased">{children}</body>
     </html>

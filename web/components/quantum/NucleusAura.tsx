@@ -20,8 +20,8 @@ void main() {
 `;
 
 /**
- * Soft perfect-circle dimensional nucleus.
- * Stars feed into this disc so the silhouette stays round, not jagged.
+ * Soft photon-ring aura around the event horizon.
+ * Dark core + bright critical orbit so stars falling in read as swallowed, not piled.
  */
 const frag = /* glsl */ `
 precision highp float;
@@ -40,18 +40,25 @@ void main() {
   float r = length(p);
   if (r > 0.98) discard;
 
-  float disc = 1.0 - smoothstep(0.0, 0.88, r);
-  disc = pow(disc, 1.65);
-  float rim = exp(-pow((r - 0.58) * 10.0, 2.0));
-  float halo = exp(-r * r * 2.2) * 0.4;
+  // Event-horizon void (subtractive feel via low alpha core)
+  float hole = 1.0 - smoothstep(0.0, 0.42, r);
+  hole = pow(hole, 1.4);
+
+  // Photon ring — thin critical orbit where light piles up
+  float ring = exp(-pow((r - 0.52) * 14.0, 2.0));
+  float ringInner = exp(-pow((r - 0.38) * 22.0, 2.0)) * 0.55;
+  float halo = exp(-r * r * 1.8) * 0.22 * (1.0 - hole);
   float breath = 0.92 + 0.08 * sin(uTime * 2.2 + r * 6.0);
+  float spin = 0.55 + 0.45 * sin(atan(p.y, p.x) * 3.0 - uTime * 1.8);
 
-  float a = (disc * 0.36 + rim * 0.5 + halo * 0.3) * a0 * breath;
+  float a = (ring * 0.72 + ringInner * 0.4 + halo * 0.35) * a0 * breath * spin;
+  a *= 1.0 - hole * 0.85;
   a *= 1.0 - smoothstep(0.82, 0.96, r);
-  a = clamp(a, 0.0, 0.5);
+  a = clamp(a, 0.0, 0.55);
 
-  vec3 col = mix(uFzMid, uFzCore, disc);
-  col = mix(col, uFzAccent, rim * 0.55 + (1.0 - disc) * 0.2);
+  vec3 col = mix(uFzMid, uFzAccent, ring);
+  col = mix(col, uFzCore, ringInner * 0.6);
+  col *= 1.0 + ring * 0.45;
 
   gl_FragColor = vec4(col, a);
 }
@@ -75,8 +82,8 @@ export default function NucleusAura() {
     if (!mat.current) return;
     const dt = Math.min(delta, 0.05);
     const suck = getSuction();
-    let pinch = THREE.MathUtils.smoothstep(suck, 0.55, 0.97);
-    pinch = Math.pow(pinch, 1.6);
+    let pinch = THREE.MathUtils.smoothstep(suck, 0.22, 0.98);
+    pinch = Math.pow(pinch, 1.35);
     if (getSuctionPhase() === 'crossing') pinch = Math.max(pinch, 0.85);
     pinch = Math.max(pinch, getArrivalFreeze() * 0.9);
     pinch = Math.max(pinch, getFlash() * 0.35);

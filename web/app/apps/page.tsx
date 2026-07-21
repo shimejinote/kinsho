@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import CyberpunkAppsIndex from '@/components/apps/CyberpunkAppsIndex';
 
 export const metadata: Metadata = {
-  title: 'kinsho // apps',
-  description: '虚空を抜けた先の端末一覧',
+  title: '端末一覧',
+  description: '公開中の接続先と、いま使える状態',
 };
 
 export default function AppsPage() {

@@ -3,10 +3,41 @@
 import type { DailyStatus } from './dailyStatus';
 import styles from './AppsDirectory.module.css';
 
-/** Everyday status rail — time, day progress, tips. */
+const PROGRESS: {
+  key: keyof Pick<
+    DailyStatus,
+    'dayProgress' | 'weekProgress' | 'monthProgress' | 'yearProgress'
+  >;
+  label: string;
+}[] = [
+  { key: 'dayProgress', label: '今日' },
+  { key: 'weekProgress', label: '今週' },
+  { key: 'monthProgress', label: '今月' },
+  { key: 'yearProgress', label: '今年' },
+];
+
+function ProgressRow({ label, value }: { label: string; value: number }) {
+  const pct = Math.min(100, Math.max(0, value));
+  return (
+    <div className={styles.statusRow}>
+      <dt>{label}</dt>
+      <dd>
+        <span className={styles.statusBar} aria-hidden>
+          <span
+            className={styles.statusBarFill}
+            style={{ width: `${pct}%` }}
+          />
+        </span>
+        <span className={styles.statusNum}>{pct.toFixed(0)}%</span>
+      </dd>
+    </div>
+  );
+}
+
+/** Everyday status rail — clock, calendar progress, tips. */
 export function DailyStatusRail({ status }: { status: DailyStatus }) {
   return (
-    <aside className={styles.statusRail} aria-label="今日の状態">
+    <aside className={styles.statusRail} aria-label="いまの状態">
       <div>
         <p className={styles.statusEyebrow}>local time</p>
         <p className={styles.statusTime}>{status.time}</p>
@@ -16,20 +47,9 @@ export function DailyStatusRail({ status }: { status: DailyStatus }) {
       </div>
 
       <dl className={styles.statusList}>
-        <div className={styles.statusRow}>
-          <dt>今日の進捗</dt>
-          <dd>
-            <span className={styles.statusBar} aria-hidden>
-              <span
-                className={styles.statusBarFill}
-                style={{ width: `${status.dayProgress}%` }}
-              />
-            </span>
-            <span className={styles.statusNum}>
-              {status.dayProgress.toFixed(0)}%
-            </span>
-          </dd>
-        </div>
+        {PROGRESS.map(({ key, label }) => (
+          <ProgressRow key={key} label={label} value={status[key]} />
+        ))}
         <div className={styles.statusRow}>
           <dt>次の正時まで</dt>
           <dd className={styles.statusNum}>{status.minutesToNextHour} 分</dd>

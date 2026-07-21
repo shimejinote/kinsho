@@ -588,6 +588,11 @@ export function getActiveSky(): PickedSky {
   return activeSky ?? pickRandomSky();
 }
 
+/** Active visit sky without creating a new random pick. */
+export function peekActiveSky(): PickedSky | null {
+  return activeSky;
+}
+
 /** @deprecated Use pickRandomSky — random per visit. */
 export function getDailySky(): PickedSky {
   return pickRandomSky();

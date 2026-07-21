@@ -1,0 +1,3413 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#060a12" />
+  <title>BRAIN MAKER · kinsho</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #060a12;
+      --bg-mid: #0a1220;
+      --panel: rgba(6, 10, 18, 0.94);
+      --cyan: #3de7ff;
+      --magenta: #ff3d9a;
+      --green: #5dffb0;
+      --holo: #7af0ff;
+      --holo-dim: rgba(61, 231, 255, 0.14);
+      --holo-faint: rgba(61, 231, 255, 0.06);
+      --text: #e8f7ff;
+      --muted: #6a8a98;
+      --line: rgba(61, 231, 255, 0.32);
+      --nav-w: min(420px, 92vw);
+      --accent-warm: rgba(255, 61, 154, 0.28);
+      --accent-cool: rgba(61, 231, 255, 0.32);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "IBM Plex Sans", sans-serif;
+      touch-action: none;
+      -webkit-text-size-adjust: 100%;
+      overscroll-behavior: none;
+    }
+    #app {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      min-height: 100svh;
+    }
+    .bg-field {
+      position: absolute; inset: 0; z-index: 0;
+      pointer-events: none; overflow: hidden;
+      background:
+        radial-gradient(ellipse 55% 38% at 50% 48%, rgba(8, 28, 48, 0.55) 0%, transparent 70%),
+        radial-gradient(ellipse 70% 50% at 12% 8%, var(--accent-warm), transparent 55%),
+        radial-gradient(ellipse 65% 48% at 90% 12%, var(--accent-cool), transparent 58%),
+        radial-gradient(ellipse 50% 40% at 78% 88%, rgba(255, 61, 154, 0.14), transparent 65%),
+        linear-gradient(180deg, #050810 0%, #0a1422 42%, #0c1a2a 100%);
+    }
+    .bg-pattern-layer {
+      position: absolute; inset: 0;
+      opacity: 1;
+    }
+    .bg-pattern-layer::after {
+      content: "";
+      position: absolute; inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent 0,
+        transparent 3px,
+        rgba(61, 231, 255, 0.035) 3px,
+        rgba(61, 231, 255, 0.035) 4px
+      );
+      animation: bg-scan-drift 9s linear infinite;
+      opacity: 0.85;
+      mix-blend-mode: screen;
+    }
+    .bg-pattern-layer svg {
+      position: absolute; display: block;
+      overflow: visible;
+    }
+    .bg-pattern-layer .bg-overlay {
+      inset: 0; width: 100%; height: 100%;
+      opacity: 0.72;
+    }
+    .bg-pattern-layer .bg-soft-mask {
+      -webkit-mask-image: radial-gradient(ellipse 78% 68% at 50% 42%, black 18%, transparent 88%);
+      mask-image: radial-gradient(ellipse 78% 68% at 50% 42%, black 18%, transparent 88%);
+    }
+    .bg-pattern-layer .bg-breathe .node-pulse {
+      animation: bg-breathe 5.5s ease-in-out infinite;
+      transform-origin: center;
+      transform-box: fill-box;
+    }
+    .bg-pattern-layer .bg-focus-halo {
+      animation: bg-focus-halo 7s ease-in-out infinite;
+      transform-origin: center;
+      transform-box: fill-box;
+    }
+    .bg-pattern-layer .bg-grid-pulse {
+      animation: bg-grid-pulse 6s ease-in-out infinite;
+    }
+    .bg-pattern-layer .bg-scan-beam {
+      animation: bg-scan-beam 5.5s linear infinite;
+    }
+    .bg-pattern-layer text {
+      font-family: Orbitron, "IBM Plex Sans", "Segoe UI", sans-serif;
+      letter-spacing: 0.08em;
+      user-select: none;
+    }
+    @keyframes bg-breathe {
+      0%, 100% { opacity: 0.55; }
+      50% { opacity: 1; }
+    }
+    @keyframes bg-focus-halo {
+      0%, 100% { opacity: 0.35; }
+      50% { opacity: 0.9; }
+    }
+    @keyframes bg-grid-pulse {
+      0%, 100% { opacity: 0.45; }
+      50% { opacity: 0.85; }
+    }
+    @keyframes bg-scan-beam {
+      0% { transform: translateY(-120%); opacity: 0; }
+      8% { opacity: 0.7; }
+      92% { opacity: 0.55; }
+      100% { transform: translateY(120%); opacity: 0; }
+    }
+    @keyframes bg-scan-drift {
+      0% { background-position: 0 0; }
+      100% { background-position: 0 80px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .bg-pattern-layer .bg-breathe .node-pulse,
+      .bg-pattern-layer .bg-focus-halo,
+      .bg-pattern-layer .bg-grid-pulse,
+      .bg-pattern-layer .bg-scan-beam,
+      .bg-pattern-layer::after {
+        animation: none;
+      }
+    }
+
+    #canvas-wrap {
+      position: absolute; inset: 0;
+      overflow: hidden;
+      z-index: 1;
+      background: transparent;
+      touch-action: none;
+    }
+    #canvas-wrap::before,
+    #canvas-wrap::after { content: none; display: none; }
+    canvas {
+      display: block; width: 100%; height: 100%; position: relative; z-index: 1;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .scanlines { display: none; }
+    .vignette {
+      pointer-events: none; position: absolute; inset: 0; z-index: 2;
+      box-shadow:
+        inset 0 0 70px 20px rgba(4, 6, 10, 0.18),
+        inset 0 0 0 1px rgba(154, 212, 200, 0.05);
+    }
+    .combine-flash {
+      pointer-events: none; position: absolute; inset: 0; z-index: 3;
+      opacity: 0; mix-blend-mode: screen;
+      transition: opacity 0.08s linear;
+    }
+    .combine-flash.on {
+      opacity: 1;
+      background: radial-gradient(circle at 50% 45%, rgba(200, 255, 255, 0.55), rgba(61, 231, 255, 0.2) 40%, transparent 68%);
+    }
+    .combine-flash.arc {
+      opacity: 1;
+      background:
+        linear-gradient(to bottom,
+          transparent 0%,
+          transparent calc(var(--scan-y, 50%) - 1.2%),
+          rgba(180, 255, 255, 0.55) calc(var(--scan-y, 50%) - 0.15%),
+          rgba(61, 231, 255, 0.9) var(--scan-y, 50%),
+          rgba(180, 255, 255, 0.35) calc(var(--scan-y, 50%) + 0.15%),
+          rgba(61, 231, 255, 0.08) calc(var(--scan-y, 50%) + 8%),
+          transparent calc(var(--scan-y, 50%) + 22%)
+        ),
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 3px,
+          rgba(61, 231, 255, 0.04) 3px,
+          rgba(61, 231, 255, 0.04) 4px
+        );
+    }
+    .combine-flash.complete {
+      opacity: 1;
+      background: radial-gradient(circle at 50% 45%, rgba(210, 255, 255, 0.65), rgba(61, 231, 255, 0.25) 45%, transparent 70%);
+    }
+
+    header {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 5;
+      padding:
+        max(1.2rem, calc(env(safe-area-inset-top) + 0.55rem))
+        max(1.5rem, calc(env(safe-area-inset-right) + 0.75rem))
+        0.75rem
+        max(1.5rem, calc(env(safe-area-inset-left) + 0.75rem));
+      display: flex; justify-content: flex-start; gap: 1rem;
+      pointer-events: none;
+    }
+    .brand { pointer-events: auto; }
+    .brand h1 {
+      font-family: Orbitron, sans-serif; font-size: clamp(1.05rem, 2.5vw, 1.7rem);
+      letter-spacing: 0.12em; color: var(--holo);
+      text-shadow: 0 0 14px rgba(154, 212, 200, 0.28);
+    }
+    .brand p { margin-top: 0.3rem; color: var(--muted); font-size: 0.88rem; max-width: 28rem; line-height: 1.45; }
+
+    .controls {
+      position: absolute; z-index: 5; left: 50%;
+      bottom: max(1.1rem, calc(env(safe-area-inset-bottom) + 0.55rem));
+      transform: translateX(-50%);
+      width: min(760px, calc(100% - 1.5rem));
+      max-height: min(42vh, 420px);
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
+      background: var(--panel); border: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+      padding: 0.55rem 0.75rem 0.85rem;
+      pointer-events: auto;
+      transition: max-height 0.22s ease, padding 0.22s ease, width 0.22s ease;
+    }
+    .controls.is-collapsed {
+      width: min(420px, calc(100% - 1.5rem));
+      max-height: 3.4rem;
+      overflow: hidden;
+      padding: 0.4rem 0.55rem;
+    }
+    .controls-chrome {
+      display: flex; align-items: center; gap: 0.45rem;
+      min-height: 2.1rem;
+    }
+    .btn-hud-toggle {
+      flex: 0 0 auto; min-width: 2.2rem; width: 2.2rem;
+      padding: 0.45rem 0.25rem; font-size: 0.85rem; letter-spacing: 0;
+      line-height: 1; color: var(--holo);
+      border-color: rgba(126, 200, 196, 0.35);
+      background: rgba(126, 200, 196, 0.08);
+    }
+    .btn-hud-toggle:hover { border-color: var(--cyan); color: var(--cyan); }
+    .controls-chrome-actions {
+      display: none; flex: 1; gap: 0.35rem; min-width: 0;
+    }
+    .controls.is-collapsed .controls-chrome-actions { display: flex; }
+    .controls-chrome-actions button {
+      flex: 1; min-width: 0; padding: 0.5rem 0.35rem; font-size: 0.55rem;
+    }
+    .controls-body {
+      margin-top: 0.45rem;
+    }
+    .controls.is-collapsed .controls-body { display: none; }
+    .controls h2 {
+      font-family: Orbitron, sans-serif; font-size: 0.58rem; letter-spacing: 0.14em;
+      color: var(--magenta); margin-bottom: 0.45rem;
+    }
+    .controls h2 span { color: var(--cyan); }
+    .controls-status {
+      display: flex; align-items: center; gap: 0.65rem;
+      margin-bottom: 0.55rem;
+    }
+    .hud-bar-status {
+      flex: 1 1 auto; min-width: 0; max-width: none;
+      font-family: Orbitron, sans-serif; font-size: 0.55rem;
+      letter-spacing: 0.1em; color: var(--muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .controls.is-collapsed .hud-bar-status { flex: 0 1 auto; max-width: 28%; }
+    .controls-status .progress { flex: 1; margin-top: 0; min-width: 60px; }
+    .btn-row { display: flex; gap: 0.45rem; flex-wrap: wrap; }
+    button {
+      appearance: none; cursor: pointer; flex: 1; min-width: 100px;
+      font-family: Orbitron, sans-serif; font-size: 0.62rem; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text);
+      border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04);
+      padding: 0.7rem 0.5rem; transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+    button:hover { border-color: var(--cyan); color: var(--cyan); }
+    button.primary {
+      border-color: var(--cyan); background: rgba(126, 200, 196, 0.14); color: var(--holo);
+      box-shadow: 0 0 16px rgba(126, 200, 196, 0.12);
+    }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .palette-toolbar {
+      display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap;
+      margin: 0.55rem 0 0.4rem; color: var(--muted); font-size: 0.75rem;
+    }
+    .palette-toolbar select {
+      appearance: none;
+      font-family: Orbitron, sans-serif; font-size: 0.58rem; letter-spacing: 0.08em;
+      color: var(--text); background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.14); padding: 0.4rem 0.5rem;
+    }
+    .look-toolbar {
+      display: flex; gap: 0.4rem; flex-wrap: wrap;
+      margin: 0 0 0.4rem;
+    }
+    .look-toolbar button {
+      flex: 1; min-width: 0; padding: 0.5rem 0.45rem; font-size: 0.55rem;
+    }
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.35rem;
+    }
+    .palette-grid.is-muted {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+    .palette-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto auto;
+      gap: 0.22rem 0.35rem;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(0,0,0,0.2); padding: 0.3rem 0.4rem;
+    }
+    .palette-item label {
+      font-size: 0.68rem; color: var(--muted);
+      text-transform: capitalize; letter-spacing: 0.02em;
+    }
+    .palette-item input[type="color"] {
+      width: 26px; height: 20px; border: none; padding: 0; background: transparent; cursor: pointer;
+      justify-self: end;
+    }
+    .palette-item .dens-row {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 2.2rem;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .palette-item .dens-row input[type="range"] {
+      width: 100%;
+      accent-color: var(--cyan);
+    }
+    .palette-item .dens-row .val {
+      font-family: Orbitron, sans-serif;
+      font-size: 0.5rem;
+      color: var(--cyan);
+      text-align: right;
+    }
+    .loader {
+      position: absolute; inset: 0; z-index: 4; display: grid; place-items: center;
+      background: rgba(5,8,12,0.55); transition: opacity 0.4s;
+    }
+    .loader.hide { opacity: 0; pointer-events: none; }
+    .loader-inner {
+      text-align: center; font-family: Orbitron, sans-serif;
+      letter-spacing: 0.18em; font-size: 0.72rem; color: var(--cyan);
+    }
+    .bar { margin: 0.9rem auto 0; width: 180px; height: 2px; background: rgba(61,231,255,0.15); overflow: hidden; }
+    .bar > i { display: block; height: 100%; width: 40%; background: var(--cyan); animation: slide 1.1s ease-in-out infinite; }
+    @keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(280%); } }
+
+    @media (max-width: 640px) {
+      .brand h1 { font-size: clamp(0.95rem, 5.2vw, 1.25rem); letter-spacing: 0.1em; }
+      .brand p { display: none; }
+      .btn-row { flex-direction: column; }
+      button {
+        min-width: 0;
+        min-height: 44px;
+        padding: 0.85rem 0.65rem;
+        font-size: 0.68rem;
+      }
+      .btn-hud-toggle { min-width: 44px; width: 44px; min-height: 44px; }
+      .controls-chrome-actions button { min-height: 40px; font-size: 0.58rem; }
+      .palette-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .controls {
+        width: min(100%, calc(100% - 0.75rem));
+        max-height: min(52dvh, 480px);
+        bottom: max(0.55rem, env(safe-area-inset-bottom));
+      }
+      .controls.is-collapsed {
+        width: min(100%, calc(100% - 0.75rem));
+        max-height: 3.6rem;
+      }
+      .callout { width: min(168px, 42vw); }
+      .callout-panel { padding: 0.45rem 0.5rem 0.5rem; }
+      .callout-panel h3 { font-size: 0.72rem; }
+      .callout-panel p { font-size: 0.62rem; line-height: 1.35; }
+      .hud-bar-status { font-size: 0.5rem; }
+    }
+
+    @media (max-width: 640px) and (orientation: landscape) {
+      .brand p { display: none; }
+      header { padding-top: max(0.45rem, env(safe-area-inset-top)); }
+      .controls { max-height: min(62dvh, 320px); }
+      .controls.is-collapsed { max-height: 3.2rem; }
+    }
+
+    /* —— cyberpunk callouts (3D CSS2D) —— */
+    #callout-layer {
+      position: absolute; inset: 0; z-index: 3;
+      pointer-events: none; overflow: hidden;
+    }
+    .callout {
+      width: min(210px, 46vw);
+      pointer-events: auto;
+      cursor: pointer;
+      opacity: 0;
+      filter: drop-shadow(0 0 12px rgba(61, 231, 255, 0.22));
+      transition: opacity 0.45s ease, filter 0.2s ease;
+      will-change: opacity;
+    }
+    .callout.visible { opacity: 1; }
+    .callout:hover .callout-panel {
+      border-color: rgba(61, 231, 255, 0.85);
+      box-shadow: 0 0 18px rgba(61, 231, 255, 0.2);
+    }
+    .callout.focused .callout-panel {
+      border-color: rgba(61, 255, 138, 0.75);
+      box-shadow: 0 0 22px rgba(61, 255, 138, 0.25);
+    }
+    .callout-shift {
+      --depth-scale: 1;
+      --depth-opacity: 1;
+      --depth-blur: 0px;
+      transform: translateY(calc(-100% - 10px)) scale(var(--depth-scale));
+      opacity: var(--depth-opacity);
+      filter: blur(var(--depth-blur));
+      transform-origin: 50% 100%;
+    }
+    .callout-panel {
+      position: relative;
+      background:
+        linear-gradient(135deg, rgba(8, 22, 32, 0.94), rgba(4, 12, 18, 0.9)),
+        repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(61,231,255,0.03) 3px, rgba(61,231,255,0.03) 4px);
+      border: 1px solid rgba(61, 231, 255, 0.45);
+      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+      padding: 0.55rem 0.65rem 0.6rem;
+      backdrop-filter: blur(10px);
+    }
+    .callout-panel::before {
+      content: "";
+      position: absolute; top: 0; right: 0;
+      width: 12px; height: 12px;
+      background: linear-gradient(135deg, transparent 50%, rgba(61, 231, 255, 0.85) 50%);
+    }
+    .callout-panel::after {
+      content: "";
+      position: absolute; left: 0; bottom: 0;
+      width: 12px; height: 12px;
+      background: linear-gradient(315deg, transparent 50%, rgba(255, 45, 149, 0.75) 50%);
+    }
+    .callout-tag {
+      font-family: Orbitron, sans-serif;
+      font-size: 0.5rem; letter-spacing: 0.14em;
+      color: var(--cyan); margin-bottom: 0.22rem;
+      text-shadow: 0 0 8px rgba(61,231,255,0.45);
+    }
+    .callout-panel h3 {
+      font-family: Orbitron, sans-serif;
+      font-size: 0.72rem; letter-spacing: 0.08em;
+      color: var(--text); margin-bottom: 0.28rem;
+    }
+    .callout-panel p {
+      font-size: 0.68rem; line-height: 1.4; color: var(--muted);
+    }
+    .callout-meta {
+      margin-top: 0.35rem; padding-top: 0.3rem;
+      border-top: 1px solid rgba(61, 231, 255, 0.15);
+      font-family: Orbitron, sans-serif;
+      font-size: 0.46rem; letter-spacing: 0.1em;
+      color: rgba(61, 231, 255, 0.7);
+    }
+    .callout[data-region="limbic"] .callout-panel { border-color: rgba(255, 45, 149, 0.55); }
+    .callout[data-region="limbic"] .callout-tag { color: var(--magenta); }
+    .callout[data-region="basal"] .callout-panel { border-color: rgba(192, 132, 255, 0.55); }
+    .callout[data-region="thalamus"] .callout-panel { border-color: rgba(125, 255, 179, 0.5); }
+    .callout[data-region="cerebellum"] .callout-panel { border-color: rgba(255, 179, 71, 0.55); }
+    .callout[data-region="brainstem"] .callout-panel { border-color: rgba(110, 168, 255, 0.55); }
+    .callout[data-region="ventricle"] .callout-panel { border-color: rgba(232, 247, 255, 0.4); }
+    .callout[data-region="white"] .callout-panel { border-color: rgba(240, 230, 255, 0.45); }
+
+    #canvas-wrap {
+      position: absolute; inset: 0;
+      overflow: hidden;
+      z-index: 1;
+      background: transparent;
+    }
+    canvas { display: block; width: 100%; height: 100%; position: relative; z-index: 1; }
+    .scanlines { display: none; }
+    .vignette {
+      pointer-events: none; position: absolute; inset: 0; z-index: 2;
+      box-shadow:
+        inset 0 0 70px 20px rgba(4, 6, 10, 0.18),
+        inset 0 0 0 1px rgba(154, 212, 200, 0.05);
+    }
+    .combine-flash {
+      pointer-events: none; position: absolute; inset: 0; z-index: 3;
+      opacity: 0; mix-blend-mode: screen;
+      transition: opacity 0.08s linear;
+    }
+    .combine-flash.on {
+      opacity: 1;
+      background: radial-gradient(circle at 50% 45%, rgba(200, 255, 255, 0.55), rgba(61, 231, 255, 0.2) 40%, transparent 68%);
+    }
+    .combine-flash.arc {
+      opacity: 1;
+      background:
+        linear-gradient(to bottom,
+          transparent 0%,
+          transparent calc(var(--scan-y, 50%) - 1.2%),
+          rgba(180, 255, 255, 0.55) calc(var(--scan-y, 50%) - 0.15%),
+          rgba(61, 231, 255, 0.9) var(--scan-y, 50%),
+          rgba(180, 255, 255, 0.35) calc(var(--scan-y, 50%) + 0.15%),
+          rgba(61, 231, 255, 0.08) calc(var(--scan-y, 50%) + 8%),
+          transparent calc(var(--scan-y, 50%) + 22%)
+        ),
+        repeating-linear-gradient(
+          0deg, transparent, transparent 3px,
+          rgba(61, 231, 255, 0.04) 3px, rgba(61, 231, 255, 0.04) 4px
+        );
+    }
+    .combine-flash.complete {
+      opacity: 1;
+      background: radial-gradient(circle at 50% 45%, rgba(210, 255, 255, 0.65), rgba(61, 231, 255, 0.25) 45%, transparent 70%);
+    }
+    header {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 5;
+      padding: 1.2rem 1.5rem; display: flex; justify-content: flex-start; gap: 1rem;
+      pointer-events: none;
+    }
+    .brand { pointer-events: auto; }
+    .brand h1 {
+      font-family: Orbitron, sans-serif; font-size: clamp(1.1rem, 2.5vw, 1.7rem);
+      letter-spacing: 0.12em; color: var(--holo);
+      text-shadow: 0 0 14px rgba(154, 212, 200, 0.28);
+    }
+    .brand p { margin-top: 0.3rem; color: var(--muted); font-size: 0.88rem; max-width: 28rem; line-height: 1.45; }
+    .progress {
+      width: 100%; height: 4px; margin-top: 0.55rem;
+      background: rgba(255,255,255,0.06); overflow: hidden;
+    }
+    .progress > i {
+      display: block; height: 100%; width: 0%;
+      background: linear-gradient(90deg, var(--cyan), var(--holo));
+      transition: width 0.12s linear;
+    }
+    .loader {
+      position: absolute; inset: 0; z-index: 10;
+      display: grid; place-items: center;
+      background: rgba(7, 10, 14, 0.72);
+      transition: opacity 0.4s ease;
+    }
+    .loader.hide { opacity: 0; pointer-events: none; }
+    .loader-inner {
+      font-family: Orbitron, sans-serif; font-size: 0.7rem;
+      letter-spacing: 0.18em; color: var(--holo); text-align: center;
+    }
+    .loader-inner .bar {
+      width: 180px; height: 3px; margin: 0.85rem auto 0;
+      background: rgba(255,255,255,0.08); overflow: hidden;
+    }
+    .loader-inner .bar > i {
+      display: block; height: 100%; width: 40%;
+      background: var(--cyan);
+      animation: loadslide 1.1s ease-in-out infinite;
+    }
+    @keyframes loadslide {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(350%); }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="bg-field" id="bg-field" aria-hidden="true">
+      <div class="bg-pattern-layer" id="bg-pattern-layer"></div>
+    </div>
+    <div id="canvas-wrap"></div>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+    <div class="combine-flash" id="combine-flash"></div>
+
+    <header>
+      <div class="brand">
+        <h1>BRAIN MAKER</h1>
+        <p>Assemble an Allen brain inside the skull. Regions unlock scan lore nodes.</p>
+      </div>
+    </header>
+
+    <div id="callout-layer" aria-hidden="true"></div>
+
+    <div class="controls is-collapsed" id="controls-panel">
+      <div class="controls-chrome">
+        <button id="btn-hud-toggle" class="btn-hud-toggle" type="button" aria-expanded="false" aria-controls="controls-body" title="メニューを展開">+</button>
+        <span class="hud-bar-status" id="debug-mini-label">State: —</span>
+        <div class="controls-chrome-actions" aria-hidden="false">
+          <button id="btn-assemble-mini" class="primary" type="button" disabled>Assemble</button>
+          <button id="btn-explode-mini" type="button" disabled>Disperse</button>
+          <button id="btn-view-mini" type="button" disabled title="視点を切り替え">View</button>
+        </div>
+      </div>
+      <div class="controls-body" id="controls-body">
+        <div class="controls-status">
+          <div class="progress"><i id="progress-bar"></i></div>
+        </div>
+        <h2>CONTROL · <span>BRAIN</span></h2>
+        <div class="btn-row">
+          <button id="btn-assemble" class="primary" type="button" disabled>Assemble</button>
+          <button id="btn-explode" type="button" disabled>Disperse</button>
+          <button id="btn-view" type="button" disabled title="視点を切り替え">View · 3/4</button>
+          <button id="btn-toggle" type="button" disabled>Auto Loop</button>
+          <button id="btn-arc" type="button" disabled title="デバッグ: スキャン発光のみ">Emit Scan</button>
+          <button id="btn-head-glow" type="button" disabled>Head Glow OFF</button>
+        </div>
+        <div class="palette-toolbar">
+          <span>Region look</span>
+          <select id="palette-preset" disabled>
+            <option value="mono">Mono（色最小）</option>
+            <option value="colorful">Colorful</option>
+            <option value="pink">Bright Pink（元寄り）</option>
+            <option value="neon">Neon</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div class="look-toolbar">
+          <button id="btn-random-look" type="button" disabled title="色・濃ゆさ・透過をランダム">Randomize</button>
+        </div>
+        <div class="palette-grid" id="palette-grid"></div>
+      </div>
+    </div>
+
+    <span id="part-count" hidden>Parts —</span>
+    <span id="state-label" hidden>State: —</span>
+
+    <div class="loader" id="loader">
+      <div class="loader-inner">
+        LOADING ATLAS
+        <div class="bar"><i></i></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+    import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+    import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+    import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+    import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+    import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+    import { CSS2DRenderer, CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
+
+    const wrap = document.getElementById("canvas-wrap");
+    const bgPatternLayer = document.getElementById("bg-pattern-layer");
+    const appEl = document.getElementById("app");
+    const loaderEl = document.getElementById("loader");
+    const flashEl = document.getElementById("combine-flash");
+    const progressBar = document.getElementById("progress-bar");
+    const stateLabel = document.getElementById("state-label");
+    const debugMiniLabel = document.getElementById("debug-mini-label");
+    const partCountEl = document.getElementById("part-count");
+    const calloutLayer = document.getElementById("callout-layer");
+    const dialogStatusLabel = null;
+    const controlsPanel = document.getElementById("controls-panel");
+    const btnHudToggle = document.getElementById("btn-hud-toggle");
+    const btnAssemble = document.getElementById("btn-assemble");
+    const btnExplode = document.getElementById("btn-explode");
+    const btnAssembleMini = document.getElementById("btn-assemble-mini");
+    const btnExplodeMini = document.getElementById("btn-explode-mini");
+    const btnView = document.getElementById("btn-view");
+    const btnViewMini = document.getElementById("btn-view-mini");
+    const btnToggle = document.getElementById("btn-toggle");
+    const btnArc = document.getElementById("btn-arc");
+    const btnHeadGlow = document.getElementById("btn-head-glow");
+    const btnRandomLook = document.getElementById("btn-random-look");
+    const palettePresetEl = document.getElementById("palette-preset");
+    const paletteGridEl = document.getElementById("palette-grid");
+
+    const OFFSCREEN_DIST = 13;
+    const ANIM_DURATION = 18;
+    const DISPERSE_DURATION = 0.55;
+    const PART_FLIGHT = 0.22;
+    const BATCH_MIN = 3;
+    const BATCH_MAX = 5;
+    const BLOOM_STRENGTH = 0.24;
+    const BLOOM_THRESHOLD = 0.82;
+    const EXPOSURE = 1.02;
+    const HEAD_SPIN_SPEED = 0.085; // rad/s — permanent head yaw
+
+    const _pos = new THREE.Vector3();
+    const _spinQ = new THREE.Quaternion();
+    const _dir = new THREE.Vector3();
+    const _ref = new THREE.Vector3();
+    const _lat = new THREE.Vector3();
+    const _paletteCol = new THREE.Color();
+    const _paletteMix = new THREE.Color(0x2a3036);
+    let _progressUiAt = 0;
+    let _scanPhase = "";
+
+    const BG_DEFAULT = "mindmap";
+    function buildMindmapSvg() {
+      return `<svg class="bg-overlay bg-soft-mask bg-breathe" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <radialGradient id="mmPaper" cx="50%" cy="42%" r="68%">
+            <stop offset="0%" stop-color="#0e2440" stop-opacity="0.35"/>
+            <stop offset="55%" stop-color="#081428" stop-opacity="0.12"/>
+            <stop offset="100%" stop-color="#050810" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="mmScan" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3de7ff" stop-opacity="0"/>
+            <stop offset="45%" stop-color="#3de7ff" stop-opacity="0.22"/>
+            <stop offset="50%" stop-color="#ff3d9a" stop-opacity="0.35"/>
+            <stop offset="55%" stop-color="#3de7ff" stop-opacity="0.18"/>
+            <stop offset="100%" stop-color="#3de7ff" stop-opacity="0"/>
+          </linearGradient>
+          <pattern id="mmGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M40 0H0V40" fill="none" stroke="#3de7ff" stroke-opacity="0.14" stroke-width="0.7"/>
+          </pattern>
+          <pattern id="mmHex" width="56" height="48" patternUnits="userSpaceOnUse">
+            <path d="M28 2L50 14V38L28 50L6 38V14Z" fill="none" stroke="#ff3d9a" stroke-opacity="0.1" stroke-width="0.8"/>
+          </pattern>
+        </defs>
+        <rect width="1200" height="800" fill="url(#mmPaper)"/>
+        <rect class="bg-grid-pulse" width="1200" height="800" fill="url(#mmGrid)"/>
+        <rect width="1200" height="800" fill="url(#mmHex)" opacity="0.7"/>
+        <rect class="bg-scan-beam" x="0" y="0" width="1200" height="140" fill="url(#mmScan)" opacity="0.55"/>
+        <g fill="none" stroke="#3de7ff" stroke-opacity="0.38" stroke-width="1.15">
+          <path d="M80 120H220V200H320"/>
+          <path d="M1120 90H980V170H880" stroke="#ff3d9a" stroke-opacity="0.32"/>
+          <path d="M60 680H180V580H280" stroke-dasharray="4 5"/>
+          <path d="M1140 720H1000V620H900" stroke="#ff3d9a" stroke-opacity="0.28" stroke-dasharray="4 5"/>
+          <path d="M200 40V100H260" stroke-opacity="0.25"/>
+          <path d="M1000 40V110H940" stroke="#ff3d9a" stroke-opacity="0.22"/>
+        </g>
+        <g fill="none" stroke="#7af0ff" stroke-opacity="0.42" stroke-width="1.25">
+          <path d="M600 180C470 230 390 320 360 410"/>
+          <path d="M600 180C730 220 830 310 860 410"/>
+          <path d="M360 410C290 500 270 590 320 670"/>
+          <path d="M860 410C930 500 950 600 880 670"/>
+          <path d="M600 180C600 290 555 380 510 450" stroke-dasharray="5 6" stroke-opacity="0.35"/>
+          <path d="M600 180C645 280 710 370 780 440" stroke-dasharray="5 6" stroke-opacity="0.35"/>
+          <path d="M360 410H510" stroke="#ff3d9a" stroke-opacity="0.28"/>
+          <path d="M860 410H780" stroke="#ff3d9a" stroke-opacity="0.28"/>
+          <path d="M200 300H280V380" stroke-opacity="0.22"/>
+          <path d="M1000 300H920V380" stroke="#ff3d9a" stroke-opacity="0.2"/>
+        </g>
+        <g fill="#ff3d9a">
+          <circle class="node-pulse" cx="600" cy="180" r="7" fill="#3de7ff"/>
+          <circle class="node-pulse" cx="360" cy="410" r="5.5" fill="#3de7ff" opacity="0.9"/>
+          <circle class="node-pulse" cx="860" cy="410" r="5.5" opacity="0.9"/>
+          <circle cx="320" cy="670" r="4" fill="#3de7ff" opacity="0.75"/>
+          <circle cx="880" cy="670" r="4" opacity="0.75"/>
+          <circle cx="510" cy="450" r="3.5" fill="#3de7ff" opacity="0.8"/>
+          <circle cx="780" cy="440" r="3.5" opacity="0.8"/>
+          <circle cx="220" cy="200" r="3" fill="#3de7ff" opacity="0.7"/>
+          <circle cx="980" cy="170" r="3" opacity="0.7"/>
+          <rect x="176" y="676" width="8" height="8" fill="#3de7ff" opacity="0.55"/>
+          <rect x="996" y="616" width="8" height="8" opacity="0.55"/>
+        </g>
+        <g fill="#7af0ff" font-size="10" opacity="0.5">
+          <text x="612" y="172">NODE·α</text>
+          <text x="300" y="404">β</text>
+          <text x="872" y="404">γ</text>
+          <text x="70" y="112" fill="#ff3d9a" opacity="0.7">SYS</text>
+          <text x="1080" y="82" fill="#ff3d9a" opacity="0.65">NET</text>
+        </g>
+        <circle class="bg-focus-halo" cx="600" cy="180" r="32" fill="none" stroke="#3de7ff" stroke-opacity="0.35" stroke-width="1.2"/>
+        <circle class="bg-focus-halo" cx="600" cy="180" r="48" fill="none" stroke="#ff3d9a" stroke-opacity="0.18" stroke-width="0.8"/>
+      </svg>`;
+    }
+    function setBackgroundPattern(_name) {
+      if (!bgPatternLayer) return;
+      bgPatternLayer.innerHTML = buildMindmapSvg();
+      try { localStorage.setItem("assemble-bg-pattern", BG_DEFAULT); } catch (_) {}
+    }
+    setBackgroundPattern(BG_DEFAULT);
+
+    const VIEW_PRESETS = [
+      { id: "front", label: "Front", yaw: 0, elev: Math.PI / 7 },
+      { id: "three-quarter", label: "3/4", yaw: Math.PI * 0.28, elev: Math.PI / 6 },
+      { id: "side", label: "Side", yaw: Math.PI * 0.5, elev: Math.PI / 8 },
+      { id: "top", label: "Top", yaw: Math.PI * 0.18, elev: Math.PI / 3.1 },
+    ];
+
+    const headSpin = {
+      speed: HEAD_SPIN_SPEED,
+      lastT: 0,
+    };
+
+    const camView = {
+      index: 1, // start at 3/4
+      radius: 5.2,
+      baseRadius: 5.2,
+      target: new THREE.Vector3(0, 0.02, 0),
+      lerping: false,
+      duration: 0.85,
+      t0: 0,
+      fromPos: new THREE.Vector3(),
+      toPos: new THREE.Vector3(),
+      fromTarget: new THREE.Vector3(),
+      toTarget: new THREE.Vector3(),
+    };
+
+    function poseFromPreset(preset, radius = camView.radius, target = camView.target) {
+      const e = preset.elev;
+      const r = radius;
+      const t = target;
+      return new THREE.Vector3(
+        t.x + r * Math.cos(e) * Math.sin(preset.yaw),
+        t.y + r * Math.sin(e),
+        t.z + r * Math.cos(e) * Math.cos(preset.yaw)
+      );
+    }
+
+    function applyViewPose(preset = VIEW_PRESETS[camView.index]) {
+      camera.position.copy(poseFromPreset(preset));
+      controls.target.copy(camView.target);
+      camera.lookAt(camView.target);
+    }
+
+    function syncViewLabel() {
+      const label = VIEW_PRESETS[camView.index]?.label || "View";
+      if (btnView) btnView.textContent = `View · ${label}`;
+      if (btnViewMini) btnViewMini.title = `視点: ${label}`;
+    }
+
+    function beginViewLerp(preset) {
+      if (camFocus.active) camFocus.active = false;
+      camView.lerping = true;
+      camView.t0 = performance.now();
+      camView.fromPos.copy(camera.position);
+      camView.fromTarget.copy(controls.target);
+      camView.toTarget.copy(camView.target);
+      camView.toPos.copy(poseFromPreset(preset));
+    }
+
+    function cycleCameraView() {
+      camView.index = (camView.index + 1) % VIEW_PRESETS.length;
+      beginViewLerp(VIEW_PRESETS[camView.index]);
+      syncViewLabel();
+    }
+
+    function updateCamView(now) {
+      if (!camView.lerping) return;
+      const u = Math.min(1, (now - camView.t0) / 1000 / camView.duration);
+      const e = 1 - Math.pow(1 - u, 3);
+      camera.position.lerpVectors(camView.fromPos, camView.toPos, e);
+      controls.target.lerpVectors(camView.fromTarget, camView.toTarget, e);
+      camera.lookAt(controls.target);
+      if (u >= 1) camView.lerping = false;
+    }
+
+    function updateHeadSpin(now) {
+      if (!modelRoot) return;
+      if (!headSpin.lastT) headSpin.lastT = now;
+      const dt = Math.min(0.05, (now - headSpin.lastT) / 1000);
+      headSpin.lastT = now;
+      modelRoot.rotation.y += headSpin.speed * dt;
+    }
+
+    function setOrbitControlsEnabled(on) {
+      // Orbit rotates the camera only — never writes modelRoot / head yaw
+      if (!on) {
+        controls.enableDamping = false;
+        controls.update();
+        controls.enabled = false;
+      } else {
+        controls.enabled = true;
+        controls.enableRotate = true;
+        controls.enablePan = false;
+        controls.enableZoom = true;
+        controls.enableDamping = false;
+        controls.update();
+        controls.enableDamping = true;
+      }
+    }
+
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(wrap.clientWidth, wrap.clientHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = EXPOSURE;
+    wrap.appendChild(renderer.domElement);
+
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(wrap.clientWidth, wrap.clientHeight);
+    labelRenderer.domElement.style.position = "absolute";
+    labelRenderer.domElement.style.inset = "0";
+    labelRenderer.domElement.style.pointerEvents = "none";
+    labelRenderer.domElement.style.zIndex = "3";
+    (calloutLayer || wrap).appendChild(labelRenderer.domElement);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(38, wrap.clientWidth / wrap.clientHeight, 0.05, 200);
+    camera.position.set(0.4, 0.6, 5.2);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.minDistance = 1.5;
+    controls.maxDistance = 18;
+    controls.enableRotate = true;
+    controls.enablePan = false;
+    controls.enableZoom = true;
+    controls.target.set(0, 0.2, 0);
+
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.02).texture;
+
+    scene.add(new THREE.AmbientLight(0x243038, 0.55));
+    const key = new THREE.DirectionalLight(0xd8f0ff, 1.35);
+    key.position.set(3.2, 4.4, 2.4);
+    scene.add(key);
+    const rim = new THREE.DirectionalLight(0xc4a574, 0.48);
+    rim.position.set(-2.4, 1.2, -3.2);
+    scene.add(rim);
+    const fill = new THREE.DirectionalLight(0x7ec8c4, 0.45);
+    fill.position.set(-0.5, 2.2, -2.4);
+    scene.add(fill);
+    const kick = new THREE.DirectionalLight(0xffffff, 0.32);
+    kick.position.set(-1.5, 3.5, 4);
+    scene.add(kick);
+    // 顎〜首下を支えるアップライト
+    const upLight = new THREE.DirectionalLight(0xb8d4c8, 0.55);
+    upLight.position.set(0.2, -2.8, 1.6);
+    scene.add(upLight);
+    const floorGlow = new THREE.PointLight(0x6a9a88, 0.85, 6.5, 1.6);
+    floorGlow.position.set(0, -1.15, 0.35);
+    scene.add(floorGlow);
+
+    const composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    const bloom = new UnrealBloomPass(new THREE.Vector2(wrap.clientWidth, wrap.clientHeight), BLOOM_STRENGTH, 0.35, BLOOM_THRESHOLD);
+    composer.addPass(bloom);
+    composer.addPass(new OutputPass());
+
+    /** @type {any[]} */
+    let parts = [];
+    let modelRoot = null;
+    /** @type {THREE.Mesh | null} */
+    let headMesh = null;
+    const headMats = [];
+    let headGlowOn = false;
+    let anim = {
+      active: false,
+      from: 0,
+      to: 1,
+      t0: 0,
+      progress: 0,
+      timeline: 0,
+      loop: false,
+      syncParts: false, // Disperse時は全パーツ同時
+      duration: ANIM_DURATION,
+      neonPrewarmed: false,
+      partsLandedAt: 0,
+      scanAfterLandMs: 850, // 最終パーツ着地後、1秒以内にスキャン
+    };
+    let combineFlash = {
+      active: false,
+      t0: 0,
+      duration: 1.75,
+    };
+
+    // スキャン／稲妻: 全マテリアル共有ユニフォーム（元アセットの emissive に乗せる）
+    const MAX_BOLT_POINTS = 32;
+    const electricUniforms = {
+      uElectric: { value: 0 },
+      uElectricTime: { value: 0 },
+      uArcProgress: { value: 0 },
+      uScanComplete: { value: 0 },
+      uElectricColor: { value: new THREE.Color(0x5ef0ff) },
+      uElectricColor2: { value: new THREE.Color(0xb8ffff) },
+      uVeinMap: { value: null },
+      // しわ沿い稲妻（マテリアル発光）— limbic 系の濃いマゼンタに合わせる
+      uBoltCount: { value: 0 },
+      uBoltIntensity: { value: 0 },
+      uBoltWidth: { value: 0.058 },
+      uBoltColor: { value: new THREE.Color(1.0, 0.45, 0.75) },
+      uBoltColorCore: { value: new THREE.Color(1.0, 0.72, 0.88) },
+      uBoltPoints: {
+        value: Array.from({ length: MAX_BOLT_POINTS }, () => new THREE.Vector3()),
+      },
+    };
+    const patchedElectricMats = new Set();
+
+    // 合体後のみ: 経路は表面サンプル、描画はマテリアル発光のみ
+    const lightning = {
+      samples: [],
+      active: null, // { pathLocal, birth, life, peak }
+      nextSpawnAt: 0,
+    };
+    const _ltmp = new THREE.Vector3();
+    const _ldir = new THREE.Vector3();
+    const _lto = new THREE.Vector3();
+    const _boltWorld = new THREE.Vector3();
+
+    function createCircuitTexture() {
+      const size = 512;
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, size, size);
+
+      // グリッド
+      ctx.strokeStyle = "rgba(80, 200, 255, 0.28)";
+      ctx.lineWidth = 1;
+      const step = 32;
+      for (let i = 0; i <= size; i += step) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, size);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(size, i);
+        ctx.stroke();
+      }
+
+      // マンハッタン回路トレース
+      for (let i = 0; i < 55; i++) {
+        ctx.strokeStyle = `rgba(120, 240, 255, ${0.45 + Math.random() * 0.55})`;
+        ctx.lineWidth = 1 + Math.random() * 1.8;
+        let x = Math.floor(Math.random() * (size / step)) * step;
+        let y = Math.floor(Math.random() * (size / step)) * step;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        const turns = 3 + Math.floor(Math.random() * 6);
+        for (let t = 0; t < turns; t++) {
+          if (Math.random() > 0.5) x += (Math.random() > 0.5 ? 1 : -1) * step * (1 + Math.floor(Math.random() * 3));
+          else y += (Math.random() > 0.5 ? 1 : -1) * step * (1 + Math.floor(Math.random() * 3));
+          x = Math.max(0, Math.min(size, x));
+          y = Math.max(0, Math.min(size, y));
+          ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+
+      // ノード
+      for (let i = 0; i < 70; i++) {
+        const x = Math.floor(Math.random() * (size / step)) * step;
+        const y = Math.floor(Math.random() * (size / step)) * step;
+        ctx.fillStyle = `rgba(180, 255, 255, ${0.5 + Math.random() * 0.5})`;
+        ctx.beginPath();
+        ctx.arc(x, y, 1.5 + Math.random() * 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      tex.colorSpace = THREE.NoColorSpace;
+      tex.needsUpdate = true;
+      return tex;
+    }
+
+    electricUniforms.uVeinMap.value = createCircuitTexture();
+
+    function isBrainMesh(obj) {
+      if (!obj?.isMesh) return false;
+      return (obj.name || "").startsWith("Allen_");
+    }
+
+    function isHeadMesh(obj) {
+      if (!obj?.isMesh) return false;
+      // GLB によっては BioDigital_Head → Mesh_0 等にリネームされる
+      return !isBrainMesh(obj);
+    }
+
+    const REGION_KEYS = [
+      "cortex",
+      "limbic",
+      "basal",
+      "thalamus",
+      "cerebellum",
+      "brainstem",
+      "ventricle",
+      "white",
+      "other",
+    ];
+
+    const REGION_LORE = {
+      cortex: {
+        code: "NODE // CORTEX",
+        title: "大脳皮質",
+        blurb: "知覚・思考・言語を走る表層グリッド。外界からの信号がここで可視化される主コンソール。",
+        color: "#5ce1ff",
+      },
+      limbic: {
+        code: "NODE // LIMBIC",
+        title: "辺縁系",
+        blurb: "情動と記憶のブラックボックス。報酬回路と恐怖ログが交差する、湿ったコア。",
+        color: "#ff2d95",
+      },
+      basal: {
+        code: "NODE // BASAL",
+        title: "基底核",
+        blurb: "運動ルーチンのオートパイロット。意図を動作パケットへ圧縮するスイッチングハブ。",
+        color: "#c084ff",
+      },
+      thalamus: {
+        code: "NODE // THALAMUS",
+        title: "視床",
+        blurb: "感覚パケットのルーター。ノイズを捨て、皮質へ優先トラフィックだけを通す関門。",
+        color: "#7dffb3",
+      },
+      cerebellum: {
+        code: "NODE // CEREBELLUM",
+        title: "小脳",
+        blurb: "タイミングと予測のコプロセッサ。誤差を学習し、動作をミリ秒単位で補正する。",
+        color: "#ffb347",
+      },
+      brainstem: {
+        code: "NODE // BRAINSTEM",
+        title: "脳幹",
+        blurb: "生命維持のファームウェア。呼吸・心拍・覚醒レベルを黙って回し続ける基盤OS。",
+        color: "#6ea8ff",
+      },
+      ventricle: {
+        code: "NODE // VENTRICLE",
+        title: "脳室系",
+        blurb: "冷却液と信号媒体の流路。CSFが巡る内部キャビティ——脳の液冷ループ。",
+        color: "#e8f7ff",
+      },
+      white: {
+        code: "NODE // WHITE MATTER",
+        title: "白質",
+        blurb: "長距離光ファイバー網。皮質モジュール同士を結ぶ高速バックボーン。",
+        color: "#f0e6ff",
+      },
+      other: {
+        code: "NODE // UNCLASSIFIED",
+        title: "未分類ノード",
+        blurb: "アトラス上の残余クラスタ。まだラベルが焼けていない信号の欠片。",
+        color: "#ff8ec8",
+      },
+    };
+
+    const REGION_PUSH = {
+      cortex: 2.55,
+      cerebellum: 2.45,
+      limbic: 2.25,
+      basal: 2.15,
+      thalamus: 2.1,
+      brainstem: 2.4,
+      ventricle: 2.05,
+      white: 2.3,
+      other: 2.35,
+    };
+
+    // 解剖的な外側バイアス（中心付近の部位が重ならないよう）
+    const REGION_BIAS = {
+      cortex: new THREE.Vector3(0.15, 0.85, 0.25),
+      limbic: new THREE.Vector3(0.55, 0.1, 0.35),
+      basal: new THREE.Vector3(-0.55, 0.05, 0.2),
+      thalamus: new THREE.Vector3(0.0, 0.35, 0.15),
+      cerebellum: new THREE.Vector3(0.05, -0.55, -0.95),
+      brainstem: new THREE.Vector3(0.0, -1.0, -0.15),
+      ventricle: new THREE.Vector3(-0.25, 0.55, -0.1),
+      white: new THREE.Vector3(0.7, 0.2, -0.35),
+      other: new THREE.Vector3(-0.7, -0.15, 0.55),
+    };
+
+    const callouts = {
+      locked: false,
+      settled: false,
+      revealT0: 0,
+      root: null,
+      nodes: new Map(),
+      _world: new THREE.Vector3(),
+      _center: new THREE.Vector3(),
+      _dir: new THREE.Vector3(),
+      _mid: new THREE.Vector3(),
+      _label: new THREE.Vector3(),
+      _box: new THREE.Box3(),
+      _size: new THREE.Vector3(),
+      _proj: new THREE.Vector3(),
+      radius: 1,
+      focusRegion: null,
+    };
+
+    const camFocus = {
+      active: false,
+      t0: 0,
+      duration: 1.15,
+      fromPos: new THREE.Vector3(),
+      toPos: new THREE.Vector3(),
+      fromTarget: new THREE.Vector3(),
+      toTarget: new THREE.Vector3(),
+    };
+
+    let loreOverrides = {};
+
+    function loreFor(region) {
+      const base = REGION_LORE[region] || REGION_LORE.other;
+      const over = loreOverrides[region];
+      return over ? { ...base, ...over } : base;
+    }
+
+    function clearCalloutRig() {
+      if (!callouts.root) return;
+      callouts.root.parent?.remove(callouts.root);
+      for (const node of callouts.nodes.values()) {
+        node.line.geometry.dispose();
+        node.line.material.dispose();
+        node.glow.geometry.dispose();
+        node.glow.material.dispose();
+        node.dot.geometry.dispose();
+        node.dot.material.dispose();
+      }
+      callouts.nodes.clear();
+      callouts.root = null;
+    }
+
+    function rebuildRegionAnchors() {
+      // 脳全体の中心
+      callouts._center.set(0, 0, 0);
+      const perRegion = new Map(); // region -> THREE.Vector3[]
+      let n = 0;
+      let maxR = 0.35;
+
+      for (const part of parts) {
+        if (!part.mesh) continue;
+        const region = part.region || "other";
+        callouts._box.setFromObject(part.mesh);
+        callouts._box.getCenter(callouts._world);
+        callouts._center.add(callouts._world);
+        n += 1;
+        if (!perRegion.has(region)) perRegion.set(region, []);
+        perRegion.get(region).push(callouts._world.clone());
+      }
+      if (!n) return new Map();
+      callouts._center.multiplyScalar(1 / n);
+      const center = callouts._center;
+
+      // 部位中心の平均だと球対称で中央に寄る → 外側の代表点を選ぶ
+      const anchors = new Map();
+      for (const [region, centers] of perRegion) {
+        const bias = REGION_BIAS[region] || REGION_BIAS.other;
+        const biasN = bias.clone().normalize();
+        let best = null;
+        let bestScore = -Infinity;
+        let dirAcc = new THREE.Vector3();
+        let dirW = 0;
+
+        for (const c of centers) {
+          callouts._dir.copy(c).sub(center);
+          const dist = callouts._dir.length();
+          maxR = Math.max(maxR, dist);
+          if (dist < 1e-6) continue;
+          callouts._dir.multiplyScalar(1 / dist);
+          const align = Math.max(0, callouts._dir.dot(biasN));
+          // 遠い + バイアス方向に近いメッシュを優先
+          const score = dist * (0.4 + 0.6 * align);
+          if (score > bestScore) {
+            bestScore = score;
+            best = c;
+          }
+          dirAcc.addScaledVector(callouts._dir, dist);
+          dirW += dist;
+        }
+
+        if (!best) {
+          // フォールバック: バイアス方向の仮想点
+          best = center.clone().addScaledVector(biasN, maxR * 0.85);
+        } else if (dirW > 1e-6) {
+          // 代表点を「表面寄り」へ：中心→方向の最大距離付近
+          dirAcc.multiplyScalar(1 / dirW).normalize();
+          const surfaceDist = Math.max(
+            best.distanceTo(center),
+            maxR * 0.72
+          );
+          best = center.clone().addScaledVector(dirAcc, surfaceDist);
+          // バイアスで少し振る
+          best.addScaledVector(biasN, maxR * 0.12);
+        }
+
+        anchors.set(region, best);
+        maxR = Math.max(maxR, best.distanceTo(center));
+      }
+
+      callouts.radius = maxR;
+      return anchors;
+    }
+
+    function makeCalloutElement(region) {
+      const lore = loreFor(region);
+      const el = document.createElement("div");
+      el.className = "callout";
+      el.dataset.region = region;
+      el.title = "クリックでフォーカス";
+      el.style.transitionDelay = `${Math.max(0, REGION_KEYS.indexOf(region)) * 0.08}s`;
+      el.innerHTML = `
+        <div class="callout-shift">
+          <div class="callout-panel">
+            <div class="callout-tag">${lore.code}</div>
+            <h3>${lore.title}</h3>
+            <p>${lore.blurb}</p>
+            <div class="callout-meta">CLUSTER · ${region.toUpperCase()} · CLICK TO FOCUS</div>
+          </div>
+        </div>`;
+      el.addEventListener("pointerdown", (ev) => {
+        ev.preventDefault();
+        ev.stopPropagation();
+        focusOnRegion(region);
+      });
+      return el;
+    }
+
+    function focusOnRegion(region) {
+      const node = callouts.nodes.get(region);
+      if (!node?.fullPositions) return;
+      const fp = node.fullPositions;
+      const anchor = new THREE.Vector3(fp[0], fp[1], fp[2]);
+      const center = callouts._center;
+
+      camFocus.fromPos.copy(camera.position);
+      camFocus.fromTarget.copy(controls.target);
+      camFocus.toTarget.copy(anchor);
+
+      const viewDir = camera.position.clone().sub(controls.target).normalize();
+      callouts._dir.copy(anchor).sub(center);
+      if (callouts._dir.lengthSq() < 1e-6) callouts._dir.copy(viewDir);
+      else callouts._dir.normalize();
+      // 外側から部位を見る位置へ
+      callouts._dir.lerp(viewDir, 0.35).normalize();
+      const dist = Math.max(
+        callouts.radius * 2.35,
+        camera.position.distanceTo(controls.target) * 0.52,
+        1.8
+      );
+      camFocus.toPos.copy(anchor).addScaledVector(callouts._dir, dist);
+      camFocus.t0 = performance.now();
+      camFocus.active = true;
+      camView.lerping = false;
+
+      callouts.focusRegion = region;
+      for (const [r, n] of callouts.nodes) {
+        n.el.classList.toggle("focused", r === region);
+      }
+    }
+
+    function updateCamFocus(now) {
+      if (!camFocus.active) return;
+      const u = Math.min(1, (now - camFocus.t0) / 1000 / camFocus.duration);
+      const e = 1 - Math.pow(1 - u, 3);
+      camera.position.lerpVectors(camFocus.fromPos, camFocus.toPos, e);
+      controls.target.lerpVectors(camFocus.fromTarget, camFocus.toTarget, e);
+      controls.update();
+      if (u >= 1) {
+        camFocus.active = false;
+      }
+    }
+
+    function buildCalloutRig() {
+      clearCalloutRig();
+      if (!modelRoot) return;
+      // 配置時の姿勢でワールド固定（以後モデルの呼吸回転には追従しない）
+      const savedYaw = modelRoot.rotation.y;
+      modelRoot.rotation.y = 0;
+      modelRoot.updateMatrixWorld(true);
+
+      const anchors = rebuildRegionAnchors();
+      modelRoot.rotation.y = savedYaw;
+      modelRoot.updateMatrixWorld(true);
+      if (!anchors.size) return;
+
+      callouts.root = new THREE.Group();
+      callouts.root.name = "CalloutRig";
+      scene.add(callouts.root);
+
+      const center = callouts._center;
+      const R = Math.max(callouts.radius, 0.35);
+
+      for (const region of REGION_KEYS) {
+        const anchor = anchors.get(region);
+        if (!anchor) continue;
+
+        // 線は「部位表面の点」から外側へ伸ばす（中心起点にしない）
+        callouts._dir.copy(anchor).sub(center);
+        if (callouts._dir.lengthSq() < 1e-5) {
+          callouts._dir.copy(REGION_BIAS[region] || REGION_BIAS.other).normalize();
+        } else {
+          callouts._dir.normalize();
+          const bias = REGION_BIAS[region];
+          if (bias) callouts._dir.addScaledVector(bias, 0.55).normalize();
+        }
+
+        const gap = Math.max(R * ((REGION_PUSH[region] || 2.3) - 1.0), R * 0.85);
+        callouts._label.copy(anchor).addScaledVector(callouts._dir, gap);
+        callouts._mid.set(
+          THREE.MathUtils.lerp(anchor.x, callouts._label.x, 0.45),
+          THREE.MathUtils.lerp(anchor.y, callouts._label.y, 0.15),
+          THREE.MathUtils.lerp(anchor.z, callouts._label.z, 0.45)
+        );
+
+        const lore = loreFor(region);
+        const color = new THREE.Color(lore.color);
+
+        const positions = new Float32Array([
+          anchor.x, anchor.y, anchor.z,
+          callouts._mid.x, callouts._mid.y, callouts._mid.z,
+          callouts._label.x, callouts._label.y, callouts._label.z,
+        ]);
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute("position", new THREE.BufferAttribute(positions.slice(), 3));
+
+        const lineMat = new THREE.LineBasicMaterial({
+          color,
+          transparent: true,
+          opacity: 0.0,
+          depthTest: false,
+          depthWrite: false,
+        });
+        const line = new THREE.Line(geo, lineMat);
+        line.renderOrder = 20;
+        callouts.root.add(line);
+
+        const glowGeo = new THREE.BufferGeometry();
+        glowGeo.setAttribute("position", new THREE.BufferAttribute(positions.slice(), 3));
+        const glowMat = new THREE.LineBasicMaterial({
+          color,
+          transparent: true,
+          opacity: 0.0,
+          depthTest: false,
+          depthWrite: false,
+        });
+        const glow = new THREE.Line(glowGeo, glowMat);
+        glow.renderOrder = 19;
+        callouts.root.add(glow);
+
+        const dot = new THREE.Mesh(
+          new THREE.SphereGeometry(R * 0.028, 12, 12),
+          new THREE.MeshBasicMaterial({
+            color,
+            transparent: true,
+            opacity: 0,
+            depthTest: false,
+          })
+        );
+        dot.position.copy(anchor);
+        dot.renderOrder = 21;
+        callouts.root.add(dot);
+
+        const el = makeCalloutElement(region);
+        const labelObj = new CSS2DObject(el);
+        labelObj.position.copy(callouts._label);
+        callouts.root.add(labelObj);
+
+        callouts.nodes.set(region, {
+          line,
+          glow,
+          dot,
+          labelObj,
+          el,
+          shiftEl: el.querySelector(".callout-shift"),
+          fullPositions: positions,
+          revealEase: 0,
+        });
+      }
+    }
+
+    function applyCalloutDepth() {
+      if (!callouts.locked || !callouts.root) return;
+      callouts.root.updateMatrixWorld(true);
+      for (const node of callouts.nodes.values()) {
+        node.labelObj.getWorldPosition(callouts._world);
+        callouts._proj.copy(callouts._world).project(camera);
+        const behind = callouts._proj.z > 1;
+        node.el.style.visibility = behind ? "hidden" : "visible";
+        if (behind) continue;
+
+        const dist = camera.position.distanceTo(callouts._world);
+        // 近い=大きく濃く / 遠い=小さく薄くボケる
+        const t = THREE.MathUtils.clamp((dist - 2.4) / 7.5, 0, 1);
+        const scale = THREE.MathUtils.lerp(1.22, 0.38, t);
+        const opacity = THREE.MathUtils.lerp(1.0, 0.22, t) * (node.revealEase ?? 1);
+        const blur = THREE.MathUtils.lerp(0, 2.2, t * t);
+        if (node.shiftEl) {
+          node.shiftEl.style.setProperty("--depth-scale", scale.toFixed(3));
+          node.shiftEl.style.setProperty("--depth-opacity", opacity.toFixed(3));
+          node.shiftEl.style.setProperty("--depth-blur", `${blur.toFixed(2)}px`);
+        }
+        if (callouts.settled) {
+          const lineA = THREE.MathUtils.lerp(0.92, 0.25, t);
+          node.line.material.opacity = lineA;
+          node.glow.material.opacity = lineA * 0.28;
+          node.dot.material.opacity = THREE.MathUtils.lerp(0.95, 0.2, t);
+        }
+      }
+    }
+
+    function setCalloutsLocked(on) {
+      const next = !!on;
+      if (next === callouts.locked) return;
+      callouts.locked = next;
+      callouts.settled = false;
+      callouts.focusRegion = null;
+      camFocus.active = false;
+      if (!next) {
+        clearCalloutRig();
+        return;
+      }
+      buildCalloutRig();
+      callouts.revealT0 = performance.now();
+    }
+
+    function updateCalloutOverlay(now = performance.now()) {
+      if (!callouts.locked || !callouts.root) return;
+      if (anim.active || anim.progress < 0.99) return;
+
+      if (!callouts.settled) {
+        const elapsed = (now - callouts.revealT0) / 1000;
+        let i = 0;
+        let allDone = true;
+        for (const region of REGION_KEYS) {
+          const node = callouts.nodes.get(region);
+          if (!node) continue;
+          const localT = THREE.MathUtils.clamp((elapsed - i * 0.08) / 0.75, 0, 1);
+          const ease = 1 - Math.pow(1 - localT, 3);
+          node.revealEase = ease;
+          if (ease < 1) allDone = false;
+
+          const fp = node.fullPositions;
+          const ax = fp[0], ay = fp[1], az = fp[2];
+          const mx = fp[3], my = fp[4], mz = fp[5];
+          const lx = fp[6], ly = fp[7], lz = fp[8];
+          const pos = node.line.geometry.attributes.position.array;
+          if (ease < 0.5) {
+            const u = ease / 0.5;
+            pos[0] = ax; pos[1] = ay; pos[2] = az;
+            pos[3] = THREE.MathUtils.lerp(ax, mx, u);
+            pos[4] = THREE.MathUtils.lerp(ay, my, u);
+            pos[5] = THREE.MathUtils.lerp(az, mz, u);
+            pos[6] = pos[3]; pos[7] = pos[4]; pos[8] = pos[5];
+          } else {
+            const u = (ease - 0.5) / 0.5;
+            pos[0] = ax; pos[1] = ay; pos[2] = az;
+            pos[3] = mx; pos[4] = my; pos[5] = mz;
+            pos[6] = THREE.MathUtils.lerp(mx, lx, u);
+            pos[7] = THREE.MathUtils.lerp(my, ly, u);
+            pos[8] = THREE.MathUtils.lerp(mz, lz, u);
+          }
+          node.line.geometry.attributes.position.needsUpdate = true;
+          node.glow.geometry.attributes.position.array.set(pos);
+          node.glow.geometry.attributes.position.needsUpdate = true;
+
+          node.line.material.opacity = 0.9 * ease;
+          node.glow.material.opacity = 0.25 * ease;
+          node.dot.material.opacity = 0.95 * ease;
+          node.dot.scale.setScalar(0.55 + 0.45 * ease);
+
+          if (ease > 0.5) node.el.classList.add("visible");
+          else node.el.classList.remove("visible");
+
+          node.labelObj.position.set(pos[6], pos[7], pos[8]);
+          i += 1;
+        }
+
+        if (allDone) {
+          for (const node of callouts.nodes.values()) {
+            const fp = node.fullPositions;
+            const pos = node.line.geometry.attributes.position.array;
+            pos.set(fp);
+            node.line.geometry.attributes.position.needsUpdate = true;
+            node.glow.geometry.attributes.position.array.set(fp);
+            node.glow.geometry.attributes.position.needsUpdate = true;
+            node.revealEase = 1;
+            node.labelObj.position.set(fp[6], fp[7], fp[8]);
+            node.el.classList.add("visible");
+          }
+          callouts.settled = true;
+        }
+      }
+
+      applyCalloutDepth();
+    }
+
+    const PALETTE_PRESETS = {
+      mono: {
+        cortex: "#9aa8b0",
+        limbic: "#8a949c",
+        basal: "#858f98",
+        thalamus: "#909aa2",
+        cerebellum: "#87919a",
+        brainstem: "#7e8890",
+        ventricle: "#a8b2ba",
+        white: "#b0b8c0",
+        other: "#8e98a0",
+      },
+      colorful: {
+        cortex: "#5ce1ff",
+        limbic: "#ff6eb4",
+        basal: "#c084ff",
+        thalamus: "#7dffb3",
+        cerebellum: "#ffb347",
+        brainstem: "#6ea8ff",
+        ventricle: "#e8f7ff",
+        white: "#f0e6ff",
+        other: "#ff8ec8",
+      },
+      pink: {
+        cortex: "#ff9ad5",
+        limbic: "#ff5eb8",
+        basal: "#ff7ac8",
+        thalamus: "#ffb3e0",
+        cerebellum: "#ff86c8",
+        brainstem: "#ff6aa8",
+        ventricle: "#ffe0f2",
+        white: "#ffd0ea",
+        other: "#ff8ec8",
+      },
+      neon: {
+        cortex: "#00f5ff",
+        limbic: "#ff2bd6",
+        basal: "#b14dff",
+        thalamus: "#39ff14",
+        cerebellum: "#ff9f1c",
+        brainstem: "#4d7cff",
+        ventricle: "#f8fbff",
+        white: "#e6d6ff",
+        other: "#ff4d9a",
+      },
+    };
+
+    let activePalette = { ...PALETTE_PRESETS.mono };
+    /** @type {"flight" | "neon"} 合体中=控え目 / 完成後=ネオン */
+    let brainLookMode = "flight";
+
+    /** 領域ごとの濃ゆさ 0=ほぼ透明 / 1=不透明寄り（現行の透け感を既定に） */
+    const REGION_DENSITY_DEFAULTS = {
+      cortex: 0.28,
+      limbic: 0.35,
+      basal: 0.33,
+      thalamus: 0.45,
+      cerebellum: 0.21,
+      brainstem: 0.61,
+      ventricle: 0.37,
+      white: 0.55,
+      other: 0.39,
+    };
+    let regionDensity = { ...REGION_DENSITY_DEFAULTS };
+    /** @type {Record<string, {face:number,rim:number,faceEmit:number,rimEmit:number,pow:number,depthWrite:boolean}>} */
+    const regionShellOverride = {};
+
+    function densityToShell(dens, region) {
+      const d = THREE.MathUtils.clamp(dens, 0, 1);
+      // 大脳は面積が広いので、同じ dens でも面を薄く・発光を抑える
+      const cortexSoft = region === "cortex" ? 0.72 : 1;
+      const face = THREE.MathUtils.lerp(0.06, 0.97, d) * cortexSoft;
+      const rim = Math.min(0.995, face + THREE.MathUtils.lerp(0.04, 0.18, d));
+      const faceEmit = THREE.MathUtils.lerp(0.04, 0.85, d) * (region === "cortex" ? 0.45 : 1);
+      const rimEmit = THREE.MathUtils.lerp(0.08, 0.9, d) * (region === "cortex" ? 0.55 : 1);
+      return {
+        face: THREE.MathUtils.clamp(face, 0.05, 0.95),
+        rim: THREE.MathUtils.clamp(rim, 0.08, 0.99),
+        faceEmit,
+        rimEmit,
+        pow: THREE.MathUtils.lerp(1.6, 2.8, d),
+        depthWrite:
+          region === "cortex" || region === "ventricle" || region === "white"
+            ? false
+            : d > 0.45,
+      };
+    }
+
+    function syncDensityIntoShellDebug(region, dens) {
+      const look = densityToShell(dens, region);
+      if (region === "cortex") {
+        cortexAlphaDebug.face = look.face;
+        cortexAlphaDebug.rim = look.rim;
+        cortexAlphaDebug.pow = look.pow;
+        cortexAlphaDebug.faceEmit = look.faceEmit;
+        cortexAlphaDebug.rimEmit = look.rimEmit;
+        // 中身が見えるよう transmission は少し残す
+        cortexAlphaDebug.transmission = THREE.MathUtils.lerp(0.42, 0.12, dens);
+        cortexAlphaDebug.thickness = THREE.MathUtils.lerp(0.1, 0.035, dens);
+      } else if (region === "white") {
+        whiteAlphaDebug.face = look.face;
+        whiteAlphaDebug.rim = look.rim;
+        whiteAlphaDebug.pow = look.pow;
+        whiteAlphaDebug.faceEmit = look.faceEmit;
+        whiteAlphaDebug.rimEmit = look.rimEmit;
+        whiteAlphaDebug.transmission = THREE.MathUtils.lerp(0.45, 0.04, dens);
+        whiteAlphaDebug.thickness = THREE.MathUtils.lerp(0.1, 0.02, dens);
+      } else {
+        regionShellOverride[region] = look;
+      }
+    }
+
+    function setRegionDensity(region, dens, { apply = true } = {}) {
+      regionDensity[region] = THREE.MathUtils.clamp(dens, 0, 1);
+      syncDensityIntoShellDebug(region, regionDensity[region]);
+      if (apply) {
+        applyShellAlphaDebug();
+        applyBrainPalette(activePalette);
+        syncShellAlphaUI();
+      }
+    }
+
+    function randomHexColor() {
+      const h = Math.random();
+      const s = 0.4 + Math.random() * 0.55;
+      const l = 0.42 + Math.random() * 0.38;
+      return `#${new THREE.Color().setHSL(h, s, l).getHexString()}`;
+    }
+
+    function randomizeBrainLook() {
+      for (const key of REGION_KEYS) {
+        activePalette[key] = randomHexColor();
+        const base = REGION_DENSITY_DEFAULTS[key] ?? 0.4;
+        const dens = THREE.MathUtils.clamp(base + (Math.random() - 0.5) * 0.16, 0.15, 0.7);
+        setRegionDensity(key, dens, { apply: false });
+      }
+      applyShellAlphaDebug();
+      applyBrainPalette(activePalette);
+      if (palettePresetEl) palettePresetEl.value = "custom";
+      buildPaletteUI();
+    }
+
+    const CORTEX_ALPHA_DEFAULTS = {
+      ...densityToShell(REGION_DENSITY_DEFAULTS.cortex, "cortex"),
+      transmission: THREE.MathUtils.lerp(0.42, 0.12, REGION_DENSITY_DEFAULTS.cortex),
+      thickness: THREE.MathUtils.lerp(0.1, 0.035, REGION_DENSITY_DEFAULTS.cortex),
+      alphaViz: false,
+    };
+    const cortexAlphaDebug = { ...CORTEX_ALPHA_DEFAULTS };
+
+    const WHITE_ALPHA_DEFAULTS = {
+      ...densityToShell(REGION_DENSITY_DEFAULTS.white, "white"),
+      transmission: THREE.MathUtils.lerp(0.45, 0.04, REGION_DENSITY_DEFAULTS.white),
+      thickness: THREE.MathUtils.lerp(0.1, 0.02, REGION_DENSITY_DEFAULTS.white),
+      visible: true,
+    };
+    const whiteAlphaDebug = { ...WHITE_ALPHA_DEFAULTS };
+
+    // 他領域のシェルも同じ透け帯で初期化
+    for (const key of REGION_KEYS) {
+      if (key === "cortex" || key === "white") continue;
+      syncDensityIntoShellDebug(key, REGION_DENSITY_DEFAULTS[key]);
+    }
+
+    function isShellAlphaRegion(region) {
+      return region === "cortex" || region === "white";
+    }
+
+    function classifyRegion(name) {
+      const n = (name || "").toLowerCase().replace(/^allen_/, "");
+      if (
+        n.includes("ventric") ||
+        n.includes("csf") ||
+        n.includes("choroid")
+      )
+        return "ventricle";
+      if (
+        n.includes("cerebell") ||
+        n.includes("vermis") ||
+        n.includes("floccul")
+      )
+        return "cerebellum";
+      if (
+        n.includes("brainstem") ||
+        n.includes("pons") ||
+        n.includes("medulla") ||
+        n.includes("midbrain") ||
+        n.includes("mesenceph") ||
+        n.includes("olivary") ||
+        n.includes("pyramid")
+      )
+        return "brainstem";
+      if (
+        n.includes("thalam") ||
+        n.includes("hypothal") ||
+        n.includes("geniculate") ||
+        n.includes("pulvinar")
+      )
+        return "thalamus";
+      if (
+        n.includes("hippocamp") ||
+        n.includes("amygdal") ||
+        n.includes("cingulat") ||
+        n.includes("entorhinal") ||
+        n.includes("parahippocamp") ||
+        n.includes("fornix") ||
+        n.includes("mammill") ||
+        n.includes("septal") ||
+        n.includes("insula")
+      )
+        return "limbic";
+      if (
+        n.includes("caudate") ||
+        n.includes("putamen") ||
+        n.includes("pallidum") ||
+        n.includes("striatum") ||
+        n.includes("accumbens") ||
+        n.includes("substantia") ||
+        n.includes("nigra") ||
+        n.includes("basal")
+      )
+        return "basal";
+      if (
+        n.includes("white") ||
+        n.includes("corpus_callosum") ||
+        n.includes("callosum") ||
+        n.includes("capsule") ||
+        n.includes("fascicul") ||
+        n.includes("commissure")
+      )
+        return "white";
+      if (
+        n.includes("cortex") ||
+        n.includes("gyrus") ||
+        n.includes("sulcus") ||
+        n.includes("frontal") ||
+        n.includes("parietal") ||
+        n.includes("temporal") ||
+        n.includes("occipital") ||
+        n.includes("precentral") ||
+        n.includes("postcentral") ||
+        n.includes("pole")
+      )
+        return "cortex";
+      return "other";
+    }
+
+    function hexToThreeColor(hex) {
+      return new THREE.Color(hex);
+    }
+
+    // 透過は残すが濃く（大脳・白質以外）。cortex/white は各 AlphaDebug が正
+    const REGION_SHELL = {
+      cortex:     { face: 0.72, rim: 0.94, faceEmit: 0.18, rimEmit: 0.28, pow: 2.2,  depthWrite: true },
+      cerebellum: { face: 0.88, rim: 0.95, faceEmit: 0.28, rimEmit: 0.4,  pow: 2.4,  depthWrite: true },
+      white:      { face: 0.18, rim: 0.42, faceEmit: 0.08, rimEmit: 0.12, pow: 2.0,  depthWrite: false },
+      limbic:     { face: 0.88, rim: 0.95, faceEmit: 0.32, rimEmit: 0.4,  pow: 2.4,  depthWrite: true },
+      ventricle:  { face: 0.78, rim: 0.9,  faceEmit: 0.22, rimEmit: 0.35, pow: 2.35, depthWrite: false },
+      basal:      { face: 0.9,  rim: 0.96, faceEmit: 0.35, rimEmit: 0.35, pow: 2.5,  depthWrite: true },
+      thalamus:   { face: 0.9,  rim: 0.96, faceEmit: 0.38, rimEmit: 0.32, pow: 2.5,  depthWrite: true },
+      brainstem:  { face: 0.9,  rim: 0.96, faceEmit: 0.4,  rimEmit: 0.3,  pow: 2.5,  depthWrite: true },
+      other:      { face: 0.86, rim: 0.94, faceEmit: 0.28, rimEmit: 0.38, pow: 2.4,  depthWrite: true },
+    };
+
+    function cortexShellLook() {
+      return {
+        face: cortexAlphaDebug.face,
+        rim: cortexAlphaDebug.rim,
+        faceEmit: cortexAlphaDebug.faceEmit,
+        rimEmit: cortexAlphaDebug.rimEmit,
+        pow: cortexAlphaDebug.pow,
+        depthWrite: false,
+      };
+    }
+
+    function whiteShellLook() {
+      return {
+        face: whiteAlphaDebug.face,
+        rim: whiteAlphaDebug.rim,
+        faceEmit: whiteAlphaDebug.faceEmit,
+        rimEmit: whiteAlphaDebug.rimEmit,
+        pow: whiteAlphaDebug.pow,
+        depthWrite: false,
+      };
+    }
+
+    function shellLookForAlphaRegion(region) {
+      if (region === "white") return whiteShellLook();
+      return cortexShellLook();
+    }
+
+    function softenHologramTransmission(mat, look) {
+      if (!mat) return;
+      const physical = !!mat.isMeshPhysicalMaterial;
+      const hasT = physical || mat.transmission !== undefined;
+      if (!hasT) return;
+
+      if (mat.userData.sourceTransmission === undefined) {
+        mat.userData.sourceTransmission = Number(mat.transmission) || 0;
+      }
+      if (mat.userData.sourceThickness === undefined && mat.thickness !== undefined) {
+        mat.userData.sourceThickness = Number(mat.thickness) || 0;
+      }
+
+      const region = mat.userData.shellAlphaRegion;
+      if (region === "cortex") {
+        mat.transmission = cortexAlphaDebug.transmission;
+        if (mat.thickness !== undefined) mat.thickness = cortexAlphaDebug.thickness;
+      } else if (region === "white") {
+        mat.transmission = whiteAlphaDebug.transmission;
+        if (mat.thickness !== undefined) mat.thickness = whiteAlphaDebug.thickness;
+      } else {
+        const face = look?.face ?? 0.9;
+        const dens = THREE.MathUtils.clamp((face - 0.85) / 0.13, 0, 1);
+        mat.transmission = THREE.MathUtils.lerp(0.08, 0.025, dens);
+        if (mat.thickness !== undefined) {
+          mat.thickness = THREE.MathUtils.lerp(0.08, 0.03, dens);
+        }
+      }
+      if (mat.attenuationDistance !== undefined) {
+        mat.attenuationDistance = 5;
+      }
+      if (mat.ior !== undefined) {
+        mat.ior = 1.2;
+      }
+      if (mat.alphaMap) mat.alphaMap = null;
+      mat.transparent = true;
+      mat.needsUpdate = true;
+    }
+
+    function applyShellUniforms(mat, look) {
+      if (!mat) return;
+      mat.transparent = true;
+      mat.depthWrite = !!look.depthWrite;
+      mat.opacity = look.face;
+      softenHologramTransmission(mat, look);
+      const su = mat.userData.shellUniforms;
+      if (su) {
+        su.uShellFace.value = look.face;
+        su.uShellRim.value = look.rim;
+        su.uShellRimPow.value = look.pow;
+        su.uShellFaceEmit.value = look.faceEmit;
+        su.uShellRimEmit.value = look.rimEmit;
+        if (su.uCortexAlphaViz) {
+          su.uCortexAlphaViz.value =
+            isShellAlphaRegion(mat.userData.shellAlphaRegion) && cortexAlphaDebug.alphaViz
+              ? 1
+              : 0;
+        }
+      } else {
+        mat.userData.pendingShell = { ...look };
+      }
+    }
+
+    function shellLookForPart(region, outerness, sizeNorm) {
+      if (isShellAlphaRegion(region)) return shellLookForAlphaRegion(region);
+      if (regionShellOverride[region]) return { ...regionShellOverride[region] };
+      const dens = regionDensity[region] ?? 0.7;
+      const fromDens = densityToShell(dens, region);
+      const outer = THREE.MathUtils.clamp(outerness, 0, 1);
+      const bulky = THREE.MathUtils.clamp(sizeNorm, 0, 1);
+      const thin = outer * 0.08 + bulky * 0.05;
+      return {
+        ...fromDens,
+        face: THREE.MathUtils.clamp(fromDens.face * (1 - thin * 0.05), 0.06, 0.98),
+        rim: Math.min(0.995, fromDens.rim),
+      };
+    }
+
+    function applyShellAlphaDebug() {
+      for (const part of parts) {
+        const region = part.region || classifyRegion(part.mesh?.name);
+        if (!isShellAlphaRegion(region)) continue;
+        if (part.mesh) {
+          part.mesh.visible = region !== "white" || whiteAlphaDebug.visible;
+        }
+        const look = shellLookForAlphaRegion(region);
+        const mats = Array.isArray(part.mesh.material)
+          ? part.mesh.material
+          : [part.mesh.material];
+        for (const mat of mats) {
+          if (!mat) continue;
+          mat.userData.shellAlphaRegion = region;
+          mat.userData.isCortex = region === "cortex";
+          mat.userData.shellLookBase = { ...look };
+          applyShellUniforms(mat, look);
+          mat.needsUpdate = true;
+        }
+      }
+      syncShellAlphaUI();
+    }
+
+    function applyCortexAlphaDebug() {
+      applyShellAlphaDebug();
+    }
+
+    function syncShellAlphaUI() {
+      const map = [
+        ["cx-face", "cx-face-val", cortexAlphaDebug.face, 2],
+        ["cx-rim", "cx-rim-val", cortexAlphaDebug.rim, 2],
+        ["cx-pow", "cx-pow-val", cortexAlphaDebug.pow, 2],
+        ["cx-trans", "cx-trans-val", cortexAlphaDebug.transmission, 2],
+        ["cx-thick", "cx-thick-val", cortexAlphaDebug.thickness, 3],
+        ["cx-face-emit", "cx-face-emit-val", cortexAlphaDebug.faceEmit, 2],
+        ["cx-rim-emit", "cx-rim-emit-val", cortexAlphaDebug.rimEmit, 2],
+        ["wm-face", "wm-face-val", whiteAlphaDebug.face, 2],
+        ["wm-rim", "wm-rim-val", whiteAlphaDebug.rim, 2],
+        ["wm-trans", "wm-trans-val", whiteAlphaDebug.transmission, 2],
+      ];
+      for (const [id, vid, v, digits] of map) {
+        const el = document.getElementById(id);
+        const vel = document.getElementById(vid);
+        if (el) el.value = String(v);
+        if (vel) vel.textContent = Number(v).toFixed(digits);
+      }
+      const viz = document.getElementById("cx-alpha-viz");
+      if (viz) viz.checked = !!cortexAlphaDebug.alphaViz;
+      const wmVis = document.getElementById("wm-visible");
+      if (wmVis) wmVis.checked = !!whiteAlphaDebug.visible;
+    }
+
+    function syncCortexAlphaUI() {
+      syncShellAlphaUI();
+    }
+
+    function applyBrainPalette(palette) {
+      if (palette) activePalette = { ...palette };
+      const neon = brainLookMode === "neon";
+      const colorMinimal = palettePresetEl?.value === "mono";
+      const freeColor = !colorMinimal;
+      for (const part of parts) {
+        const region = part.region || classifyRegion(part.mesh?.name);
+        const shellAlpha = isShellAlphaRegion(region);
+        const hex = activePalette[region] || activePalette.other;
+        _paletteCol.set(hex);
+        if (colorMinimal) {
+          _paletteCol.lerp(_paletteMix, 0.55);
+          _paletteCol.multiplyScalar(0.55);
+        } else if (!neon && !freeColor) {
+          _paletteCol.lerp(_paletteMix, 0.35);
+          _paletteCol.multiplyScalar(0.8);
+        }
+        if (part.mesh && region === "white") {
+          part.mesh.visible = whiteAlphaDebug.visible;
+        }
+        const mats = Array.isArray(part.mesh.material)
+          ? part.mesh.material
+          : [part.mesh.material];
+        for (const mat of mats) {
+          if (!mat) continue;
+          if (mat.emissive) mat.emissive.copy(_paletteCol);
+          if (mat.color) {
+            const mul = colorMinimal ? 0.12 : freeColor ? (neon ? 0.4 : 0.28) : neon ? 0.32 : 0.16;
+            mat.color.copy(_paletteCol).multiplyScalar(region === "cortex" ? mul * 0.75 : mul);
+          }
+          if (mat.emissiveIntensity !== undefined) {
+            const base = mat.userData.baseEmissive ?? Math.min(mat.emissiveIntensity || 1, 1);
+            mat.userData.baseEmissive = base;
+            let mul = colorMinimal
+              ? neon ? 0.28 : 0.18
+              : freeColor
+                ? neon ? 0.85 : 0.55
+                : neon ? 0.62 : 0.36;
+            if (region === "cortex") mul *= 0.55;
+            mat.emissiveIntensity = base * mul;
+          }
+          // 光沢：低ラフネス + クリアコート
+          if (mat.roughness !== undefined) {
+            mat.roughness = neon ? 0.18 : 0.28;
+          }
+          if (mat.metalness !== undefined) {
+            mat.metalness = neon ? 0.32 : 0.22;
+          }
+          if (mat.envMapIntensity !== undefined) {
+            mat.envMapIntensity = neon ? 1.45 : 1.2;
+          }
+          if (mat.isMeshPhysicalMaterial) {
+            mat.clearcoat = neon ? 0.72 : 0.55;
+            mat.clearcoatRoughness = neon ? 0.12 : 0.2;
+            if (mat.specularIntensity !== undefined) mat.specularIntensity = 1.15;
+          }
+          if (shellAlpha) {
+            mat.userData.shellAlphaRegion = region;
+            mat.userData.isCortex = region === "cortex";
+            applyShellUniforms(mat, shellLookForAlphaRegion(region));
+          } else {
+            const densLook =
+              regionShellOverride[region] ||
+              densityToShell(regionDensity[region] ?? 0.7, region);
+            mat.userData.shellLookBase = { ...densLook };
+            applyShellUniforms(mat, densLook);
+          }
+          // color/intensity のみなら needsUpdate 不要（毎フレ再コンパイル相当のカクつき防止）
+        }
+      }
+      if (electricUniforms?.uBoltColor) {
+        const limb = hexToThreeColor(activePalette.limbic || "#8a949c");
+        if (colorMinimal) limb.lerp(new THREE.Color(0x334044), 0.4);
+        electricUniforms.uBoltColor.value.copy(limb);
+        if (electricUniforms.uBoltColorCore) {
+          electricUniforms.uBoltColorCore.value
+            .copy(limb)
+            .lerp(new THREE.Color(0xffffff), 0.55);
+        }
+      }
+      bloom.strength = neon
+        ? BLOOM_STRENGTH
+        : BLOOM_STRENGTH * (colorMinimal ? 0.45 : freeColor ? 0.8 : 0.65);
+      bloom.threshold = neon
+        ? BLOOM_THRESHOLD
+        : Math.min(0.94, BLOOM_THRESHOLD + 0.05);
+      renderer.toneMappingExposure = neon ? EXPOSURE : EXPOSURE * 0.92;
+    }
+
+    function setBrainLookMode(mode, { force = false } = {}) {
+      const next = mode === "neon" ? "neon" : "flight";
+      if (!force && brainLookMode === next) return;
+      brainLookMode = next;
+      applyBrainPalette(activePalette);
+    }
+
+    function buildPaletteUI() {
+      if (!paletteGridEl) return;
+      paletteGridEl.innerHTML = "";
+      for (const key of REGION_KEYS) {
+        const item = document.createElement("div");
+        item.className = "palette-item";
+        const label = document.createElement("label");
+        label.textContent = key;
+        label.htmlFor = `pal-${key}`;
+        const input = document.createElement("input");
+        input.type = "color";
+        input.id = `pal-${key}`;
+        input.value = activePalette[key] || "#ffffff";
+        input.addEventListener("input", () => {
+          activePalette[key] = input.value;
+          applyBrainPalette(activePalette);
+          if (palettePresetEl) palettePresetEl.value = "custom";
+          if (paletteGridEl) paletteGridEl.classList.remove("is-muted");
+        });
+        const densRow = document.createElement("div");
+        densRow.className = "dens-row";
+        const dens = document.createElement("input");
+        dens.type = "range";
+        dens.min = "0";
+        dens.max = "1";
+        dens.step = "0.01";
+        dens.value = String(regionDensity[key] ?? 0.7);
+        dens.title = "濃ゆさ（透過）";
+        dens.id = `dens-${key}`;
+        const densVal = document.createElement("span");
+        densVal.className = "val";
+        densVal.id = `dens-${key}-val`;
+        densVal.textContent = Number(dens.value).toFixed(2);
+        dens.addEventListener("input", () => {
+          densVal.textContent = Number(dens.value).toFixed(2);
+          if (palettePresetEl && palettePresetEl.value === "mono") {
+            palettePresetEl.value = "custom";
+          }
+          if (paletteGridEl) paletteGridEl.classList.remove("is-muted");
+          setRegionDensity(key, Number(dens.value));
+        });
+        densRow.append(dens, densVal);
+        item.append(label, input, densRow);
+        paletteGridEl.appendChild(item);
+      }
+    }
+
+    function setPalettePreset(name) {
+      if (name === "custom") {
+        buildPaletteUI();
+        applyBrainPalette(activePalette);
+        if (palettePresetEl) palettePresetEl.value = "custom";
+        if (paletteGridEl) paletteGridEl.classList.remove("is-muted");
+        return;
+      }
+      const preset = PALETTE_PRESETS[name] || PALETTE_PRESETS.mono;
+      activePalette = { ...preset };
+      regionDensity = { ...REGION_DENSITY_DEFAULTS };
+      for (const key of REGION_KEYS) {
+        syncDensityIntoShellDebug(key, regionDensity[key]);
+      }
+      buildPaletteUI();
+      applyShellAlphaDebug();
+      applyBrainPalette(activePalette);
+      syncShellAlphaUI();
+      if (palettePresetEl) palettePresetEl.value = name in PALETTE_PRESETS ? name : "mono";
+      if (paletteGridEl) {
+        paletteGridEl.classList.toggle("is-muted", false);
+      }
+    }
+
+    const patchedHeadMats = new Set();
+    const headBrainWindow = {
+      center: new THREE.Vector3(),
+      radius: 1,
+    };
+
+    function computeBrainWindow(root) {
+      const box = new THREE.Box3();
+      let found = false;
+      root.updateMatrixWorld(true);
+      root.traverse((obj) => {
+        if (!isBrainMesh(obj)) return;
+        box.expandByObject(obj);
+        found = true;
+      });
+      if (!found) {
+        headBrainWindow.center.set(0, 0.05, 0);
+        headBrainWindow.radius = 0.55;
+        return headBrainWindow;
+      }
+      box.getCenter(headBrainWindow.center);
+      const size = box.getSize(new THREE.Vector3());
+      // 脳殻付近は控えめ、顔・首・後頭部側で線を強調
+      headBrainWindow.radius = Math.max(size.x, size.y, size.z) * 0.42;
+      return headBrainWindow;
+    }
+
+    function syncHeadBrainWindow() {
+      for (const mat of headMats) {
+        const sh = mat.userData.headShader;
+        if (!sh?.uniforms?.uBrainCenter) continue;
+        sh.uniforms.uBrainCenter.value.copy(headBrainWindow.center);
+        sh.uniforms.uBrainRadius.value = headBrainWindow.radius;
+      }
+    }
+
+    function patchHeadMaterial(mat) {
+      if (!mat || patchedHeadMats.has(mat.uuid)) return;
+      patchedHeadMats.add(mat.uuid);
+
+      mat.onBeforeCompile = (shader) => {
+        shader.uniforms.uBrainCenter = { value: headBrainWindow.center.clone() };
+        shader.uniforms.uBrainRadius = { value: headBrainWindow.radius };
+        shader.uniforms.uLineBoost = { value: 3.4 };
+        shader.uniforms.uFillDim = { value: 0.34 };
+        shader.uniforms.uDepthNear = { value: 2.3 };
+        shader.uniforms.uDepthFar = { value: 8.2 };
+        mat.userData.headShader = shader;
+
+        shader.vertexShader = shader.vertexShader
+          .replace(
+            "#include <common>",
+            `#include <common>
+            varying vec3 vHeadWorldPos;
+            varying vec3 vHeadWorldNormal;`
+          )
+          .replace(
+            "#include <begin_vertex>",
+            `#include <begin_vertex>
+            vHeadWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
+            vHeadWorldNormal = normalize(mat3(modelMatrix) * objectNormal);`
+          );
+
+        shader.fragmentShader = shader.fragmentShader
+          .replace(
+            "#include <common>",
+            `#include <common>
+            varying vec3 vHeadWorldPos;
+            varying vec3 vHeadWorldNormal;
+            uniform vec3 uBrainCenter;
+            uniform float uBrainRadius;
+            uniform float uLineBoost;
+            uniform float uFillDim;
+            uniform float uDepthNear;
+            uniform float uDepthFar;`
+          )
+          .replace(
+            "#include <emissivemap_fragment>",
+            `#include <emissivemap_fragment>
+            {
+              float dist = length(vHeadWorldPos - uBrainCenter);
+              // 脳付近=0 / 外側=1
+              float outside = smoothstep(uBrainRadius * 0.75, uBrainRadius * 1.55, dist);
+              // テクスチャの明るい画素＝回路線
+              float line = max(max(totalEmissiveRadiance.r, totalEmissiveRadiance.g), totalEmissiveRadiance.b);
+              #ifdef USE_MAP
+                vec3 mapLum = diffuseColor.rgb;
+                line = max(line, max(mapLum.r, max(mapLum.g, mapLum.b)));
+              #endif
+              line = pow(clamp(line * 1.35, 0.0, 1.0), 0.85);
+
+              // カメラ距離で遠近（近い回路を立て、遠い面を沈める）
+              float camDist = length(vHeadWorldPos - cameraPosition);
+              float depthT = smoothstep(uDepthNear, uDepthFar, camDist);
+              float depthEmit = mix(1.4, 0.22, depthT);
+              float depthAlpha = mix(1.15, 0.42, depthT);
+              float depthCol = mix(1.2, 0.35, depthT);
+
+              vec3 viewDir = normalize(cameraPosition - vHeadWorldPos);
+              float ndv = abs(dot(normalize(vHeadWorldNormal), viewDir));
+              float fres = pow(clamp(1.0 - ndv, 0.0, 1.0), 2.1);
+              // 手前の稜線を強調、奥は弱く
+              float rim = fres * mix(1.15, 0.25, depthT);
+
+              // 線: 脳の外で強く / 塗り: 抑える + 遠近
+              float emitMul = mix(uFillDim, uLineBoost, line);
+              emitMul *= mix(0.55, 1.35, outside);
+              emitMul *= depthEmit;
+              // 顎〜首下を持ち上げる（下側のさびしさ対策）
+              float lower = smoothstep(0.05, -0.75, vHeadWorldPos.y);
+              emitMul *= mix(1.0, 1.55, lower);
+              totalEmissiveRadiance *= emitMul;
+              totalEmissiveRadiance += totalEmissiveRadiance * rim * mix(0.35, 1.1, line);
+
+              diffuseColor.a *= mix(0.55, mix(0.7, 1.15, outside), line) * depthAlpha;
+              diffuseColor.rgb *= mix(0.25, mix(0.55, 1.0, outside), line) * depthCol;
+              diffuseColor.rgb *= mix(1.0, 0.7, depthT * (1.0 - line));
+              diffuseColor.rgb *= mix(1.0, 1.35, lower * (0.45 + line * 0.55));
+              diffuseColor.a = min(1.0, diffuseColor.a * mix(1.0, 1.2, lower));
+            }`
+          );
+      };
+      mat.needsUpdate = true;
+    }
+
+    function setupHead(root) {
+      headMesh = null;
+      headMats.length = 0;
+      headGlowOn = false;
+      computeBrainWindow(root);
+      root.traverse((obj) => {
+        if (!isHeadMesh(obj)) return;
+        if (!headMesh) headMesh = obj;
+        obj.castShadow = false;
+        obj.receiveShadow = false;
+        obj.renderOrder = -5; // 脳より先に描画
+        const mats = Array.isArray(obj.material) ? obj.material : [obj.material];
+        for (const mat of mats) {
+          if (!mat) continue;
+          mat.side = THREE.DoubleSide;
+          mat.transparent = true;
+          mat.depthWrite = false;
+          // 頭部シェルは GLB で transmission≈0.92 — 先に薄める
+          softenHologramTransmission(mat, { face: 0.7 });
+          if (mat.opacity !== undefined) {
+            mat.userData.headBaseOpacity = Math.min(mat.opacity ?? 1, 0.42);
+            mat.opacity = mat.userData.headBaseOpacity;
+          }
+          const baseEm =
+            mat.emissiveIntensity !== undefined
+              ? Math.min(mat.emissiveIntensity || 1, 3.2)
+              : 1.4;
+          mat.userData.headBaseEmissive = Math.max(baseEm * 0.95, 1.15);
+          mat.userData.headGlowEmissive = Math.min(baseEm * 1.85, 3.6);
+          mat.emissiveIntensity = mat.userData.headBaseEmissive;
+          if (mat.color) mat.color.setRGB(0.01, 0.08, 0.04);
+          if (mat.emissive) mat.emissive.setRGB(0.32, 1.0, 0.48);
+          patchHeadMaterial(mat);
+          headMats.push(mat);
+          mat.needsUpdate = true;
+        }
+      });
+      applyHeadGlow(false);
+      syncHeadBrainWindow();
+      return headMesh;
+    }
+
+    function applyHeadGlow(on) {
+      headGlowOn = !!on;
+      for (const mat of headMats) {
+        const base = mat.userData.headBaseEmissive ?? 1.15;
+        const glow = mat.userData.headGlowEmissive ?? base * 1.6;
+        mat.emissiveIntensity = headGlowOn ? glow : base;
+        if (mat.opacity !== undefined) {
+          const bo = mat.userData.headBaseOpacity ?? 0.38;
+          mat.opacity = headGlowOn ? Math.min(bo * 1.25, 0.5) : bo;
+        }
+        const sh = mat.userData.headShader;
+        if (sh?.uniforms?.uLineBoost) {
+          sh.uniforms.uLineBoost.value = headGlowOn ? 4.6 : 3.4;
+        }
+      }
+      if (btnHeadGlow) {
+        btnHeadGlow.textContent = headGlowOn ? "Head Glow ON" : "Head Glow OFF";
+        btnHeadGlow.classList.toggle("primary", headGlowOn);
+      }
+    }
+
+    function collectSurfaceSamples(root, maxSamples = 7000) {
+      const samples = [];
+      const v = new THREE.Vector3();
+      root.updateMatrixWorld(true);
+      root.traverse((obj) => {
+        if (!isBrainMesh(obj) || !obj.geometry?.attributes?.position) return;
+        const pos = obj.geometry.attributes.position;
+        const step = Math.max(1, Math.floor(pos.count / 60));
+        for (let i = 0; i < pos.count; i += step) {
+          v.fromBufferAttribute(pos, i).applyMatrix4(obj.matrixWorld);
+          root.worldToLocal(v);
+          samples.push(v.clone());
+        }
+      });
+      if (samples.length <= maxSamples) return samples;
+      const out = [];
+      const stride = samples.length / maxSamples;
+      for (let i = 0; i < maxSamples; i++) out.push(samples[Math.floor(i * stride)]);
+      return out;
+    }
+
+    function buildLightningPath(samples) {
+      if (samples.length < 20) return null;
+      const used = new Set();
+      let idx = Math.floor(Math.random() * samples.length);
+      const path = [samples[idx].clone()];
+      used.add(idx);
+      _ldir
+        .set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5)
+        .normalize();
+
+      const steps = 6 + Math.floor(Math.random() * 12); // 短めの稲妻
+      const minD = 0.018;
+      const maxD = 0.06 + Math.random() * 0.05;
+
+      for (let s = 0; s < steps; s++) {
+        const cur = path[path.length - 1];
+        const candidates = [];
+        for (let i = 0; i < samples.length; i++) {
+          if (used.has(i)) continue;
+          const d = cur.distanceTo(samples[i]);
+          if (d < minD || d > maxD) continue;
+          _lto.subVectors(samples[i], cur).normalize();
+          const align = _lto.dot(_ldir);
+          // しわ沿いっぽく、大きく折り返しすぎない
+          if (align < -0.15 && s > 3) continue;
+          candidates.push({ i, score: align * 0.55 + Math.random() });
+        }
+        if (!candidates.length) {
+          // 探索半径を広げて再試行
+          for (let i = 0; i < samples.length; i++) {
+            if (used.has(i)) continue;
+            const d = cur.distanceTo(samples[i]);
+            if (d < minD || d > maxD * 1.8) continue;
+            candidates.push({ i, score: Math.random() });
+          }
+        }
+        if (!candidates.length) break;
+
+        candidates.sort((a, b) => b.score - a.score);
+        const pick = candidates[Math.floor(Math.random() * Math.min(6, candidates.length))];
+        const next = samples[pick.i];
+
+        // 稲妻のギザギザ中点
+        const mid = cur.clone().lerp(next, 0.45 + Math.random() * 0.2);
+        mid.add(
+          _ltmp
+            .set(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5)
+            .multiplyScalar(0.012 + Math.random() * 0.02)
+        );
+        path.push(mid);
+        path.push(next.clone());
+        _ldir.subVectors(next, cur).normalize();
+        used.add(pick.i);
+      }
+
+      return path.length >= 4 ? path : null;
+    }
+
+    function packBoltPath(path) {
+      if (path.length <= MAX_BOLT_POINTS) return path.map((p) => p.clone());
+      const out = [];
+      for (let i = 0; i < MAX_BOLT_POINTS; i++) {
+        const t = i / (MAX_BOLT_POINTS - 1);
+        const idx = t * (path.length - 1);
+        const i0 = Math.floor(idx);
+        const i1 = Math.min(path.length - 1, i0 + 1);
+        out.push(path[i0].clone().lerp(path[i1], idx - i0));
+      }
+      return out;
+    }
+
+    function clearLightningBolts() {
+      lightning.active = null;
+      electricUniforms.uBoltCount.value = 0;
+      electricUniforms.uBoltIntensity.value = 0;
+      if (!combineFlash.active) bloom.strength = BLOOM_STRENGTH;
+    }
+
+    function pushBoltToUniforms(pathLocal, intensity) {
+      if (!modelRoot || !pathLocal?.length) {
+        clearLightningBolts();
+        return;
+      }
+      modelRoot.updateMatrixWorld(true);
+      const n = Math.min(pathLocal.length, MAX_BOLT_POINTS);
+      for (let i = 0; i < MAX_BOLT_POINTS; i++) {
+        if (i < n) {
+          _boltWorld.copy(pathLocal[i]).applyMatrix4(modelRoot.matrixWorld);
+          electricUniforms.uBoltPoints.value[i].copy(_boltWorld);
+        } else {
+          electricUniforms.uBoltPoints.value[i].set(0, 0, 0);
+        }
+      }
+      electricUniforms.uBoltCount.value = n;
+      electricUniforms.uBoltIntensity.value = intensity;
+    }
+
+    function spawnLightningBolt() {
+      if (lightning.samples.length < 20) return;
+      const path = buildLightningPath(lightning.samples);
+      if (!path) return;
+      lightning.active = {
+        pathLocal: packBoltPath(path),
+        birth: performance.now(),
+        life: 900 + Math.random() * 1100,
+        peak: 0.22 + Math.random() * 0.18,
+      };
+      pushBoltToUniforms(lightning.active.pathLocal, 0.01);
+    }
+
+    function initLightning(root) {
+      clearLightningBolts();
+      if (!lightning.samples.length && root) {
+        lightning.samples = collectSurfaceSamples(root);
+      }
+      lightning.nextSpawnAt = performance.now() + 2500;
+    }
+
+    function isLightningActive() {
+      return !anim.active && anim.timeline >= 0.99 && anim.progress >= 0.95;
+    }
+
+    function updateLightning(now) {
+      if (!isLightningActive()) {
+        if (lightning.active) clearLightningBolts();
+        return;
+      }
+
+      if (!lightning.active && now >= lightning.nextSpawnAt) {
+        spawnLightningBolt();
+        lightning.nextSpawnAt = now + 4000 + Math.random() * 4000;
+      }
+
+      if (!lightning.active) {
+        electricUniforms.uBoltIntensity.value = 0;
+        return;
+      }
+
+      const b = lightning.active;
+      const t = (now - b.birth) / b.life;
+      if (t >= 1) {
+        clearLightningBolts();
+        return;
+      }
+      let envelope = t < b.peak ? t / b.peak : 1 - (t - b.peak) / Math.max(1 - b.peak, 0.001);
+      envelope = Math.max(0, envelope);
+      const soft = 0.92 + 0.08 * Math.sin((now - b.birth) * 0.008);
+      const intensity = envelope * soft;
+      pushBoltToUniforms(b.pathLocal, intensity);
+      // 全体ブルームは動かさない（定期暗転の原因になる）
+    }
+
+    function patchElectricMaterial(mat) {
+      if (!mat || patchedElectricMats.has(mat.uuid)) return;
+      patchedElectricMats.add(mat.uuid);
+
+      mat.onBeforeCompile = (shader) => {
+        Object.assign(shader.uniforms, electricUniforms);
+        const pending = isShellAlphaRegion(mat.userData.shellAlphaRegion)
+          ? shellLookForAlphaRegion(mat.userData.shellAlphaRegion)
+          : mat.userData.pendingShell || {
+              face: 0.86, rim: 0.94, faceEmit: 0.28, rimEmit: 0.38, pow: 2.35,
+            };
+        shader.uniforms.uShellFace = { value: pending.face };
+        shader.uniforms.uShellRim = { value: pending.rim };
+        shader.uniforms.uShellRimPow = { value: pending.pow };
+        shader.uniforms.uShellFaceEmit = { value: pending.faceEmit };
+        shader.uniforms.uShellRimEmit = { value: pending.rimEmit };
+        shader.uniforms.uCortexAlphaViz = {
+          value:
+            isShellAlphaRegion(mat.userData.shellAlphaRegion) && cortexAlphaDebug.alphaViz
+              ? 1
+              : 0,
+        };
+        mat.userData.shellUniforms = {
+          uShellFace: shader.uniforms.uShellFace,
+          uShellRim: shader.uniforms.uShellRim,
+          uShellRimPow: shader.uniforms.uShellRimPow,
+          uShellFaceEmit: shader.uniforms.uShellFaceEmit,
+          uShellRimEmit: shader.uniforms.uShellRimEmit,
+          uCortexAlphaViz: shader.uniforms.uCortexAlphaViz,
+        };
+        mat.userData.electricShader = shader;
+
+        shader.vertexShader = shader.vertexShader
+          .replace(
+            "#include <common>",
+            `#include <common>
+            varying vec3 vElectricWorldPos;
+            varying vec3 vElectricNormal;`
+          )
+          .replace(
+            "#include <begin_vertex>",
+            `#include <begin_vertex>
+            vElectricWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
+            vElectricNormal = normalize(mat3(modelMatrix) * objectNormal);`
+          );
+
+        shader.fragmentShader = shader.fragmentShader
+          .replace(
+            "#include <common>",
+            `#include <common>
+            varying vec3 vElectricWorldPos;
+            varying vec3 vElectricNormal;
+            uniform float uElectric;
+            uniform float uElectricTime;
+            uniform float uArcProgress;
+            uniform float uScanComplete;
+            uniform vec3 uElectricColor;
+            uniform vec3 uElectricColor2;
+            uniform sampler2D uVeinMap;
+            uniform int uBoltCount;
+            uniform float uBoltIntensity;
+            uniform float uBoltWidth;
+            uniform vec3 uBoltColor;
+            uniform vec3 uBoltColorCore;
+            uniform vec3 uBoltPoints[32];
+            uniform float uShellFace;
+            uniform float uShellRim;
+            uniform float uShellRimPow;
+            uniform float uShellFaceEmit;
+            uniform float uShellRimEmit;
+            uniform float uCortexAlphaViz;
+
+            float boltDistToSeg(vec3 p, vec3 a, vec3 b) {
+              vec3 ab = b - a;
+              float ab2 = dot(ab, ab);
+              if (ab2 < 1e-8) return distance(p, a);
+              float t = clamp(dot(p - a, ab) / ab2, 0.0, 1.0);
+              return length(p - (a + ab * t));
+            }
+
+            float shellFresnel() {
+              vec3 viewDir = normalize(cameraPosition - vElectricWorldPos);
+              float ndv = abs(dot(normalize(vElectricNormal), viewDir));
+              return pow(clamp(1.0 - ndv, 0.0, 1.0), uShellRimPow);
+            }`
+          )
+          .replace(
+            "#include <alphamap_fragment>",
+            `#include <alphamap_fragment>
+            {
+              float sf = shellFresnel();
+              // 大脳透過デバッグ: face/rim α を Fresnel ミックス
+              diffuseColor.a = mix(uShellFace, uShellRim, sf);
+              if (uCortexAlphaViz > 0.5) {
+                diffuseColor.rgb = vec3(diffuseColor.a);
+              } else {
+                diffuseColor.rgb *= mix(0.88, 1.0, sf);
+              }
+            }`
+          )
+          .replace(
+            "#include <opacity_fragment>",
+            `#include <opacity_fragment>
+            {
+              float sf = shellFresnel();
+              diffuseColor.a = mix(uShellFace, uShellRim, sf);
+              if (uCortexAlphaViz > 0.5) {
+                diffuseColor.rgb = vec3(diffuseColor.a);
+              } else {
+                diffuseColor.rgb *= mix(0.88, 1.0, sf);
+              }
+            }`
+          )
+          .replace(
+            "#include <emissivemap_fragment>",
+            `#include <emissivemap_fragment>
+            {
+              float sf = shellFresnel();
+              if (uCortexAlphaViz > 0.5) {
+                totalEmissiveRadiance *= 0.04;
+              } else {
+                totalEmissiveRadiance *= mix(uShellFaceEmit, 1.0, sf);
+                totalEmissiveRadiance += totalEmissiveRadiance * sf * uShellRimEmit * 0.4;
+              }
+            }
+            // 合体後稲妻: 元メッシュ表面上の emissive（ホロ材と同じ経路）
+            if (uBoltIntensity > 0.001 && uBoltCount > 1) {
+              vec3 wp = vElectricWorldPos;
+              float glow = 0.0;
+              float core = 0.0;
+              for (int i = 0; i < 31; i++) {
+                if (i >= uBoltCount - 1) break;
+                float d = boltDistToSeg(wp, uBoltPoints[i], uBoltPoints[i + 1]);
+                glow = max(glow, 1.0 - smoothstep(0.0, uBoltWidth, d));
+                core = max(core, 1.0 - smoothstep(0.0, uBoltWidth * 0.38, d));
+              }
+              glow = pow(glow, 1.35);
+              core = pow(core, 1.6);
+              totalEmissiveRadiance += uBoltColor * glow * uBoltIntensity * 2.4;
+              totalEmissiveRadiance += uBoltColorCore * core * uBoltIntensity * 2.0;
+            }
+            if (uElectric > 0.001) {
+              vec3 wp = vElectricWorldPos;
+              vec3 pn = normalize(vElectricNormal);
+
+              // 下→上のスキャンプレーン
+              float yMin = -1.15;
+              float yMax = 1.2;
+              float scanY = mix(yMin - 0.25, yMax + 0.25, clamp(uArcProgress, 0.0, 1.0));
+              float dy = wp.y - scanY;
+
+              // シャープなスキャンライン + 後方の帯
+              float scanLine = exp(-pow(dy * 22.0, 2.0));
+              float scanGlow = exp(-pow(dy * 7.0, 2.0)) * 0.45;
+              float scanned = 1.0 - smoothstep(-0.04, 0.12, dy);
+
+              // 回路グリッド（ワールド投影）
+              vec2 cuv = wp.xz * 1.35 + vec2(0.0, uElectricTime * 0.35);
+              vec2 cuv2 = wp.xy * 1.1 + vec2(uElectricTime * 0.55, 0.0);
+              float circuit = texture2D(uVeinMap, cuv).g;
+              circuit = max(circuit, texture2D(uVeinMap, cuv2).g * 0.75);
+              circuit = pow(clamp(circuit, 0.0, 1.0), 1.1);
+
+              // 細かいデジタル格子
+              float gx = abs(fract(wp.x * 14.0) - 0.5);
+              float gz = abs(fract(wp.z * 14.0) - 0.5);
+              float grid = 1.0 - smoothstep(0.0, 0.04, min(gx, gz));
+              grid = pow(grid, 1.5);
+
+              // スキャン済み領域を電流が流れる（進行方向にパルス）
+              float flowPulse = 0.55 + 0.45 * sin((wp.y * 10.0 - uElectricTime * 9.0) + wp.x * 3.0);
+              float current = circuit * scanned * flowPulse;
+              float gridLit = grid * scanned * 0.35;
+
+              // 未スキャン側はほぼ暗い
+              float ahead = smoothstep(0.0, 0.2, dy);
+
+              vec3 col = mix(uElectricColor, uElectricColor2, scanLine);
+              float beam = (scanLine * 2.8 + scanGlow) * uElectric;
+              float body = (current * 2.2 + gridLit) * uElectric * (1.0 - ahead * 0.85);
+
+              // スキャン完了の一括ハイライト
+              float complete = uScanComplete * (0.55 + 0.45 * circuit + grid * 0.25);
+
+              // リムでサイバー感
+              float fres = pow(1.0 - abs(dot(pn, normalize(vec3(0.15, 0.7, 0.55)))), 2.2);
+
+              totalEmissiveRadiance += col * (beam + body + complete * 3.2);
+              totalEmissiveRadiance += uElectricColor2 * fres * scanned * uElectric * 0.55;
+            }`
+          );
+      };
+
+      mat.needsUpdate = true;
+    }
+
+    function setStatus(text, state) {
+      const label = text || "—";
+      if (debugMiniLabel) debugMiniLabel.textContent = label;
+      if (dialogStatusLabel) dialogStatusLabel.textContent = label;
+      if (stateLabel) stateLabel.textContent = label;
+    }
+
+    function easeOutCubic(t) {
+      return 1 - Math.pow(1 - t, 3);
+    }
+
+    function easeInOutCubic(t) {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    function easeOutQuint(t) {
+      return 1 - Math.pow(1 - t, 5);
+    }
+
+    function easeInQuint(t) {
+      return t * t * t * t * t;
+    }
+
+    /** 着地にわずかなオーバーシュート（重み） */
+    function easeOutBack(t) {
+      const c1 = 1.45;
+      const c3 = c1 + 1;
+      return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+    }
+
+    /** 接近軌道: 中盤はしっかり進み、着地前で重く減速 */
+    function sampleApproach(start, bend, end, t, out, ease = true) {
+      const u = ease ? easeInOutCubic(t) : t;
+      const omu = 1 - u;
+      return out
+        .set(0, 0, 0)
+        .addScaledVector(start, omu * omu)
+        .addScaledVector(bend, 2 * omu * u)
+        .addScaledVector(end, u * u);
+    }
+
+    function triggerCombineFlash() {
+      combineFlash.active = true;
+      combineFlash.t0 = performance.now();
+      _scanPhase = "scan";
+      controls.enableDamping = false;
+      controls.enabled = false;
+      flashEl.classList.remove("on", "complete");
+      flashEl.style.setProperty("--scan-y", "100%");
+      if (!flashEl.classList.contains("arc")) flashEl.classList.add("arc");
+      electricUniforms.uElectric.value = 0;
+      electricUniforms.uArcProgress.value = 0;
+      electricUniforms.uScanComplete.value = 0;
+      setStatus("SCANNING", "loading");
+    }
+
+    function updateCombineFlash(now) {
+      if (!combineFlash.active) return false;
+      const elapsed = (now - combineFlash.t0) / 1000;
+      const t = elapsed / combineFlash.duration;
+
+      if (t >= 1) {
+        combineFlash.active = false;
+        _scanPhase = "";
+        flashEl.classList.remove("on", "arc", "complete");
+        bloom.strength = BLOOM_STRENGTH;
+        bloom.threshold = BLOOM_THRESHOLD;
+        renderer.toneMappingExposure = EXPOSURE;
+        electricUniforms.uElectric.value = 0;
+        electricUniforms.uArcProgress.value = 0;
+        electricUniforms.uScanComplete.value = 0;
+        for (const part of parts) {
+          const mats = Array.isArray(part.mesh.material) ? part.mesh.material : [part.mesh.material];
+          for (const mat of mats) {
+            if (mat && mat.emissiveIntensity !== undefined) {
+              const base = mat.userData.baseEmissive ?? 1;
+              mat.emissiveIntensity = base * 0.75;
+            }
+          }
+        }
+        setStatus("Ready", "ok");
+        setOrbitControlsEnabled(true);
+        setCalloutsLocked(true);
+        return false;
+      }
+
+      // スキャン線を先に進め、発光は遅れて追従
+      const scanSpan = 0.58;
+      const scanT = easeOutCubic(Math.min(1, t / scanSpan));
+      let e = 0;
+      let complete = 0;
+      if (t < 0.06) {
+        e = 0;
+      } else if (t < scanSpan) {
+        const glowU = (t - 0.06) / (scanSpan - 0.06);
+        e = easeInOutCubic(glowU) * (0.25 + 0.75 * scanT);
+      } else if (t < 0.78) {
+        e = 1;
+      } else {
+        e = Math.max(0, 1 - (t - 0.78) / 0.22);
+      }
+
+      let phase = "fade";
+      if (t >= scanSpan && t < 0.78) {
+        phase = "complete";
+        complete = Math.max(0, 1 - Math.abs((t - 0.68) / 0.08));
+      } else if (t < scanSpan) {
+        phase = "scan";
+      }
+
+      if (phase !== _scanPhase) {
+        _scanPhase = phase;
+        if (phase === "complete") {
+          flashEl.classList.remove("arc");
+          flashEl.classList.add("complete");
+          setStatus("SCAN COMPLETE", "ok");
+        } else if (phase === "scan") {
+          flashEl.classList.add("arc");
+          flashEl.classList.remove("complete");
+        } else {
+          flashEl.classList.remove("arc", "complete");
+        }
+      }
+      if (phase === "scan") {
+        flashEl.style.setProperty("--scan-y", `${(1 - scanT) * 100}%`);
+      }
+
+      e = Math.max(0, e);
+      electricUniforms.uElectric.value = e;
+      electricUniforms.uElectricTime.value = elapsed;
+      electricUniforms.uArcProgress.value = scanT;
+      electricUniforms.uScanComplete.value = complete * e;
+
+      const beamBoost = Math.exp(-Math.pow((scanT - 0.5) * 2.2, 2.0)) * 0.12;
+      bloom.strength = BLOOM_STRENGTH + e * (0.32 + complete * 0.85 + beamBoost);
+      bloom.threshold = Math.max(0.22, BLOOM_THRESHOLD - e * 0.3 - complete * 0.22);
+      renderer.toneMappingExposure = EXPOSURE + e * 0.22 + complete * 0.4;
+
+      for (const part of parts) {
+        const mats = Array.isArray(part.mesh.material) ? part.mesh.material : [part.mesh.material];
+        for (const mat of mats) {
+          if (mat && mat.emissiveIntensity !== undefined) {
+            const base = mat.userData.baseEmissive ?? 1;
+            mat.emissiveIntensity = base * 0.7 + e * base * 0.5 + complete * base * 1.05;
+          }
+        }
+      }
+      return true;
+    }
+
+    function frameObject(object) {
+      const box = new THREE.Box3().setFromObject(object);
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+      object.position.sub(center);
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const fit = maxDim / (2 * Math.tan((Math.PI * camera.fov) / 360));
+      camView.radius = fit * 1.7;
+      camView.baseRadius = camView.radius;
+      camView.target.set(0, size.y * 0.02, 0);
+      camView.index = 1;
+      applyViewPose(VIEW_PRESETS[camView.index]);
+      syncViewLabel();
+      controls.update();
+      return { size, center: new THREE.Vector3(0, 0, 0) };
+    }
+
+    function prepareParts(root) {
+      parts = [];
+      const meshes = [];
+      root.updateMatrixWorld(true);
+      root.traverse((obj) => {
+        if (!isBrainMesh(obj)) return;
+        meshes.push(obj);
+        obj.castShadow = false;
+        obj.receiveShadow = false;
+        obj.userData.region = classifyRegion(obj.name);
+      });
+
+      // 内外・サイズを測ってから透過を決める
+      const _box = new THREE.Box3();
+      const _size = new THREE.Vector3();
+      const _center = new THREE.Vector3();
+      const worldCenters = [];
+      let maxRadius = 1e-6;
+      let maxExtent = 1e-6;
+      const centroid = new THREE.Vector3();
+
+      for (const mesh of meshes) {
+        mesh.getWorldPosition(_center);
+        worldCenters.push(_center.clone());
+        centroid.add(_center);
+        _box.setFromObject(mesh);
+        _box.getSize(_size);
+        const extent = Math.max(_size.x, _size.y, _size.z);
+        maxExtent = Math.max(maxExtent, extent);
+      }
+      const nMesh = Math.max(meshes.length, 1);
+      centroid.multiplyScalar(1 / nMesh);
+      for (const c of worldCenters) {
+        maxRadius = Math.max(maxRadius, c.distanceTo(centroid));
+      }
+
+      for (let i = 0; i < meshes.length; i++) {
+        const obj = meshes[i];
+        const region = obj.userData.region;
+        const outerness = worldCenters[i].distanceTo(centroid) / maxRadius;
+        _box.setFromObject(obj);
+        _box.getSize(_size);
+        const extent = Math.max(_size.x, _size.y, _size.z);
+        const sizeNorm = extent / maxExtent;
+        const look = shellLookForPart(region, outerness, sizeNorm);
+        obj.userData.outerness = outerness;
+        obj.userData.sizeNorm = sizeNorm;
+        // 内側を後描画 → 透過外殻の奥に核が見える
+        // 白質は内側・後描画しない（皮質ヒダを遮らない）
+        obj.renderOrder =
+          region === "white"
+            ? -20
+            : Math.round((1 - outerness) * 40 + sizeNorm * -8);
+
+        const srcMats = Array.isArray(obj.material) ? obj.material : [obj.material];
+        const outMats = srcMats.map((src) => {
+          if (!src) return src;
+          const mat = src.clone();
+          mat.side = THREE.DoubleSide;
+          mat.transparent = true;
+          mat.depthWrite = look.depthWrite;
+          mat.opacity = look.face;
+          mat.userData.shellAlphaRegion = isShellAlphaRegion(region) ? region : null;
+          mat.userData.isCortex = region === "cortex";
+          softenHologramTransmission(mat, look);
+          if (mat.emissiveIntensity !== undefined) {
+            mat.userData.baseEmissive = Math.min(mat.emissiveIntensity || 1, 0.85);
+            mat.emissiveIntensity = mat.userData.baseEmissive * 0.22;
+          }
+          if (mat.roughness !== undefined) mat.roughness = 0.28;
+          if (mat.metalness !== undefined) mat.metalness = 0.22;
+          if (mat.envMapIntensity !== undefined) mat.envMapIntensity = 1.2;
+          if (mat.isMeshPhysicalMaterial) {
+            mat.clearcoat = 0.55;
+            mat.clearcoatRoughness = 0.2;
+          }
+          mat.userData.pendingShell = look;
+          mat.userData.shellLookBase = { ...look };
+          patchElectricMaterial(mat);
+          applyShellUniforms(mat, look);
+          mat.needsUpdate = true;
+          return mat;
+        });
+        obj.material = outMats.length === 1 ? outMats[0] : outMats;
+        if (region === "white") obj.visible = whiteAlphaDebug.visible;
+      }
+
+      // 稲妻用サンプルは集合姿勢のまま取得（脳のみ）
+      lightning.samples = collectSurfaceSamples(root);
+
+      const n = meshes.length;
+      const assembledWorld = meshes.map((m) => {
+        const p = new THREE.Vector3();
+        m.getWorldPosition(p);
+        return p;
+      });
+
+      // 中央→外側へ収束（内側が先に着地）
+      const outernessOf = meshes.map((_, i) =>
+        worldCenters[i].distanceTo(centroid) / maxRadius
+      );
+      const order = Array.from({ length: n }, (_, i) => i);
+      order.sort((a, b) => {
+        const da = outernessOf[a] + (Math.random() - 0.5) * 0.04;
+        const db = outernessOf[b] + (Math.random() - 0.5) * 0.04;
+        return da - db;
+      });
+
+      const batchOf = new Array(n);
+      let batchIndex = 0;
+      let inBatch = 0;
+      let batchSize = BATCH_MIN + Math.floor(Math.random() * (BATCH_MAX - BATCH_MIN + 1));
+      for (const meshIdx of order) {
+        batchOf[meshIdx] = batchIndex;
+        inBatch += 1;
+        if (inBatch >= batchSize) {
+          batchIndex += 1;
+          inBatch = 0;
+          batchSize = BATCH_MIN + Math.floor(Math.random() * (BATCH_MAX - BATCH_MIN + 1));
+        }
+      }
+      const batchCount = n ? Math.max(...batchOf) + 1 : 1;
+      const flight = Math.max(PART_FLIGHT, 3.2 / Math.max(batchCount, 1));
+
+      meshes.forEach((mesh, i) => {
+        const assembledLocal = mesh.parent
+          ? mesh.parent.worldToLocal(assembledWorld[i].clone())
+          : assembledWorld[i].clone();
+
+        // 放射方向から画面外へ（レーン接近用）
+        const dir = assembledWorld[i].clone().sub(centroid);
+        if (dir.lengthSq() < 1e-8) {
+          const theta = Math.random() * Math.PI * 2;
+          const phi = Math.acos(2 * Math.random() - 1);
+          dir.set(
+            Math.sin(phi) * Math.cos(theta),
+            Math.sin(phi) * Math.sin(theta),
+            Math.cos(phi)
+          );
+        } else {
+          dir.normalize();
+        }
+        // 横ズレは控えめ → 直線的で重いレーン
+        _ref.set(0, 1, 0);
+        if (Math.abs(dir.dot(_ref)) > 0.85) _ref.set(1, 0, 0);
+        _lat.crossVectors(dir, _ref).normalize();
+        const side = (Math.random() < 0.5 ? -1 : 1) * (0.22 + Math.random() * 0.35);
+        dir.addScaledVector(_lat, side * 0.18).normalize();
+
+        const dist = OFFSCREEN_DIST * (0.95 + Math.random() * 0.35);
+        const explodedWorld = centroid.clone().add(dir.clone().multiplyScalar(dist));
+        const explodedLocal = mesh.parent
+          ? mesh.parent.worldToLocal(explodedWorld)
+          : explodedWorld;
+
+        // ゆるいカーブ用の中間点（スナップ用ホールドは使わない）
+        _dir.subVectors(assembledLocal, explodedLocal);
+        const travel = _dir.length();
+        _dir.multiplyScalar(1 / Math.max(travel, 1e-6));
+        const mid = explodedLocal.clone().lerp(assembledLocal, 0.42);
+        _ref.set(0, 1, 0);
+        if (Math.abs(_dir.dot(_ref)) > 0.85) _ref.set(1, 0, 0);
+        _lat.crossVectors(_dir, _ref).normalize();
+        const bendLocal = mid.addScaledVector(
+          _lat,
+          (Math.random() < 0.5 ? -1 : 1) * travel * (0.03 + Math.random() * 0.05)
+        );
+
+        const outer = THREE.MathUtils.clamp(outernessOf[i], 0, 1);
+        const b = batchOf[i];
+        // バッチ波 + 半径に応じた追加遅延で「核→殻」の流れを強調
+        const wave =
+          batchCount <= 1 ? 0 : (b / (batchCount - 1)) * (1 - flight) * 0.72;
+        const radial = outer * (1 - flight) * 0.28;
+        const delay = wave + radial;
+        const micro = (Math.random() - 0.5) * flight * 0.04;
+
+        const spinAxis = new THREE.Vector3(
+          Math.random() - 0.5,
+          Math.random() - 0.5,
+          Math.random() - 0.5
+        ).normalize();
+        const spinAmount = (Math.PI * (0.08 + Math.random() * 0.16)) * (Math.random() < 0.5 ? 1 : -1);
+
+        const baseScale = mesh.scale.clone();
+        const baseQuat = mesh.quaternion.clone();
+        const approachQuat = baseQuat.clone();
+        _spinQ.setFromAxisAngle(spinAxis, spinAmount);
+        approachQuat.multiply(_spinQ);
+
+        parts.push({
+          mesh,
+          region: mesh.userData.region || classifyRegion(mesh.name),
+          assembled: assembledLocal,
+          exploded: explodedLocal,
+          bend: bendLocal,
+          delay: Math.max(0, delay + micro),
+          flight,
+          baseScale,
+          baseQuat,
+          approachQuat,
+        });
+
+        mesh.position.copy(explodedLocal);
+        mesh.scale.copy(baseScale).multiplyScalar(0.55);
+        mesh.visible = false;
+      });
+
+      partCountEl.textContent = `Brain ${parts.length}`;
+      return parts.length;
+    }
+
+    function setProgressVisual(p) {
+      const now = performance.now();
+      if (now - _progressUiAt < 50 && p > 0.02 && p < 0.98) return;
+      _progressUiAt = now;
+      progressBar.style.width = `${Math.round(p * 100)}%`;
+      const label =
+        p < 0.02 ? "State: Dispersed" :
+        p > 0.98 ? "State: Assembled" :
+        `State: ${Math.round(p * 100)}%`;
+      stateLabel.textContent = label;
+      if (debugMiniLabel) debugMiniLabel.textContent = label;
+      if (dialogStatusLabel) dialogStatusLabel.textContent = label;
+    }
+
+    function applyAssembleProgress(globalT) {
+      let sum = 0;
+      let allLanded = parts.length > 0;
+      for (const part of parts) {
+        const flight = part.flight || PART_FLIGHT;
+        let local;
+        if (anim.syncParts) {
+          // 一斉飛散: 遅延なし、加速して飛び散る
+          const leave = THREE.MathUtils.clamp(1 - globalT, 0, 1);
+          local = 1 - easeInQuint(leave);
+        } else {
+          local = THREE.MathUtils.clamp(
+            (globalT - part.delay) / Math.max(flight, 0.001),
+            0,
+            1
+          );
+        }
+        if (!anim.syncParts && local < 0.985) allLanded = false;
+        part.mesh.visible = local > 0.001;
+
+        sampleApproach(part.exploded, part.bend, part.assembled, local, _pos, !anim.syncParts);
+        part.mesh.position.copy(_pos);
+
+        const ease = anim.syncParts ? local : easeOutCubic(local);
+        const land = anim.syncParts ? local : Math.min(1, easeOutBack(local));
+        const s = THREE.MathUtils.lerp(0.55, 1.0, Math.min(1, land));
+        part.mesh.scale.copy(part.baseScale).multiplyScalar(s);
+        part.mesh.quaternion.copy(part.approachQuat).slerp(part.baseQuat, ease);
+
+        const mats = Array.isArray(part.mesh.material) ? part.mesh.material : [part.mesh.material];
+        for (const mat of mats) {
+          if (mat && mat.emissiveIntensity !== undefined) {
+            const base = mat.userData.baseEmissive ?? 1;
+            mat.emissiveIntensity = THREE.MathUtils.lerp(base * 0.35, base * 0.9, ease);
+          }
+        }
+        sum += ease;
+      }
+      const avg = parts.length ? sum / parts.length : globalT;
+      anim.timeline = globalT;
+      anim.progress = avg;
+      if (anim.active && !anim.syncParts && anim.to >= 0.99 && allLanded) {
+        if (!anim.partsLandedAt) anim.partsLandedAt = performance.now();
+      }
+      setProgressVisual(avg);
+      return avg;
+    }
+
+    function startAnim(toAssembled) {
+      setCalloutsLocked(false);
+      if (toAssembled) {
+        randomizeBrainLook();
+        brainLookMode = "flight";
+        applyBrainPalette(activePalette);
+        if (headGlowOn) applyHeadGlow(false);
+        anim.neonPrewarmed = false;
+      } else {
+        anim.neonPrewarmed = false;
+        if (headGlowOn) applyHeadGlow(false);
+        brainLookMode = "flight";
+        applyBrainPalette(activePalette);
+      }
+
+      setOrbitControlsEnabled(false);
+
+      anim.active = true;
+      anim.from = anim.timeline;
+      anim.to = toAssembled ? 1 : 0;
+      anim.syncParts = !toAssembled;
+      anim.duration = toAssembled ? ANIM_DURATION : DISPERSE_DURATION;
+      anim.t0 = performance.now();
+      anim.partsLandedAt = 0;
+      if (toAssembled) anim.neonPrewarmed = false;
+
+      if (!toAssembled) clearLightningBolts();
+    }
+
+    function finishAnim() {
+      const completedAssemble = anim.to >= 0.99;
+      anim.active = false;
+      anim.timeline = anim.to;
+      anim.progress = anim.to;
+      applyAssembleProgress(anim.to);
+      if (completedAssemble) {
+        controls.enableDamping = false;
+        controls.enabled = false;
+        setBrainLookMode("neon", { force: true });
+        applyHeadGlow(true);
+        triggerCombineFlash();
+      } else {
+        setOrbitControlsEnabled(true);
+        brainLookMode = "flight";
+        applyBrainPalette(activePalette);
+      }
+      if (anim.loop) {
+        const wait = completedAssemble ? 3200 : 700;
+        setTimeout(() => startAnim(anim.timeline < 0.5), wait);
+      }
+    }
+
+
+    // Bottom HUD controls — loop starts OFF; no auto-start on load
+    anim.loop = false;
+    if (btnToggle) {
+      btnToggle.classList.remove("primary");
+      btnToggle.textContent = "Auto Loop";
+    }
+
+    function onAssembleClick() {
+      anim.loop = false;
+      btnToggle?.classList.remove("primary");
+      if (btnToggle) btnToggle.textContent = "Auto Loop";
+      startAnim(true);
+    }
+    function onExplodeClick() {
+      anim.loop = false;
+      btnToggle?.classList.remove("primary");
+      if (btnToggle) btnToggle.textContent = "Auto Loop";
+      startAnim(false);
+    }
+    function onViewClick() {
+      cycleCameraView();
+    }
+    btnAssemble?.addEventListener("click", onAssembleClick);
+    btnExplode?.addEventListener("click", onExplodeClick);
+    btnAssembleMini?.addEventListener("click", onAssembleClick);
+    btnExplodeMini?.addEventListener("click", onExplodeClick);
+    btnView?.addEventListener("click", onViewClick);
+    btnViewMini?.addEventListener("click", onViewClick);
+    btnToggle?.addEventListener("click", () => {
+      anim.loop = !anim.loop;
+      btnToggle.classList.toggle("primary", anim.loop);
+      btnToggle.textContent = anim.loop ? "Loop ON" : "Auto Loop";
+      if (anim.loop && !anim.active) {
+        startAnim(anim.timeline < 0.5);
+      }
+    });
+    btnHudToggle?.addEventListener("click", () => {
+      if (!controlsPanel) return;
+      const collapsed = controlsPanel.classList.toggle("is-collapsed");
+      btnHudToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      btnHudToggle.title = collapsed ? "メニューを展開" : "メニューを最小化";
+      btnHudToggle.textContent = collapsed ? "+" : "−";
+      const chromeActions = controlsPanel.querySelector(".controls-chrome-actions");
+      if (chromeActions) chromeActions.setAttribute("aria-hidden", collapsed ? "false" : "true");
+    });
+    btnArc?.addEventListener("click", () => {
+      if (anim.progress < 0.5) {
+        applyAssembleProgress(1);
+        anim.timeline = 1;
+        anim.progress = 1;
+        setProgressVisual(1);
+      }
+      triggerCombineFlash();
+    });
+    btnHeadGlow?.addEventListener("click", () => {
+      applyHeadGlow(!headGlowOn);
+    });
+    palettePresetEl?.addEventListener("change", () => {
+      setPalettePreset(palettePresetEl.value);
+    });
+    btnRandomLook?.addEventListener("click", () => {
+      randomizeBrainLook();
+    });
+
+    const loader = new GLTFLoader();
+    setStatus("Loading", "loading");
+
+    loader.load(
+      "./head_allen_fit.glb",
+      (gltf) => {
+        modelRoot = gltf.scene;
+        scene.add(modelRoot);
+        frameObject(modelRoot);
+        setupHead(modelRoot);
+        prepareParts(modelRoot);
+        computeBrainWindow(modelRoot);
+        syncHeadBrainWindow();
+        randomizeBrainLook();
+        brainLookMode = "flight";
+        applyBrainPalette(activePalette);
+        applyCortexAlphaDebug();
+        applyAssembleProgress(0);
+        initLightning(modelRoot);
+        buildPaletteUI();
+        if (palettePresetEl) {
+          palettePresetEl.disabled = false;
+          palettePresetEl.value = "custom";
+        }
+        for (const el of [
+          btnAssemble, btnExplode, btnAssembleMini, btnExplodeMini,
+          btnView, btnViewMini, btnToggle, btnArc, btnHeadGlow, btnRandomLook,
+        ]) {
+          if (el) el.disabled = false;
+        }
+        loaderEl.classList.add("hide");
+        setStatus("Ready", "ok");
+        if (partCountEl) {
+          partCountEl.textContent =
+            `Brain ${parts.length}` + (headMesh ? " · Head 1" : "");
+        }
+        // Idle after load: dispersed ready state — no auto-assemble / no auto-loop
+        anim.loop = false;
+        if (btnToggle) {
+          btnToggle.classList.remove("primary");
+          btnToggle.textContent = "Auto Loop";
+        }
+      },
+      (ev) => {
+        if (ev.total) setStatus(`Load ${Math.round((ev.loaded / ev.total) * 100)}%`, "loading");
+      },
+      (err) => {
+        console.error(err);
+        loaderEl.classList.add("hide");
+        setStatus("Error", "error");
+      }
+    );
+
+    function onResize() {
+      const w = wrap.clientWidth || window.innerWidth;
+      const h = wrap.clientHeight || window.innerHeight;
+      if (w < 1 || h < 1) return;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(w, h, false);
+      labelRenderer.setSize(w, h);
+      composer.setSize(w, h);
+      bloom.setSize(w, h);
+    }
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", () => setTimeout(onResize, 180));
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", onResize);
+    }
+
+    function animate(now) {
+      requestAnimationFrame(animate);
+      if (anim.active) {
+        const elapsed = (now - anim.t0) / 1000;
+        const u = Math.min(1, elapsed / anim.duration);
+        const g = THREE.MathUtils.lerp(anim.from, anim.to, u);
+        applyAssembleProgress(g);
+        const landScanReady =
+          anim.to >= 0.99 &&
+          anim.partsLandedAt > 0 &&
+          now - anim.partsLandedAt >= anim.scanAfterLandMs;
+        if (anim.to < 0.99) {
+          if (u >= 1) finishAnim();
+        } else if (u >= 1 || landScanReady) {
+          finishAnim();
+        }
+      }
+      updateCombineFlash(now);
+      updateLightning(now);
+
+      const tSec = now * 0.001;
+      if (!combineFlash.active) {
+        electricUniforms.uElectricTime.value = tSec;
+      }
+
+      // Head yaw always advances; camera orbit is independent (look only)
+      updateHeadSpin(now);
+      updateCamView(now);
+      if (controls.enabled && !anim.active && !combineFlash.active && !camView.lerping && !camFocus.active) {
+        controls.update();
+      }
+      updateCamFocus(now);
+      updateCalloutOverlay(now);
+      composer.render();
+      labelRenderer.render(scene, camera);
+    }
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

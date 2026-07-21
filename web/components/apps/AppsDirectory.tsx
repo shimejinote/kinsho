@@ -3,7 +3,7 @@
 import { useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { Orbitron, Share_Tech_Mono } from 'next/font/google';
-import { APPS, LAB_META, NAV_ITEMS, type AppEntry, type NavId } from './appsData';
+import { APPS, NAV_ITEMS, type AppEntry, type NavId } from './appsData';
 import { DailyStatusRail } from './DailyStatusRail';
 import { useDailyStatus } from './useDailyStatus';
 import styles from './AppsDirectory.module.css';
@@ -42,7 +42,7 @@ function filterApps(nav: NavId): AppEntry[] {
 }
 
 /**
- * Lab console: clear app picker + everyday status.
+ * Utility console: app picker + everyday status. No brand chrome.
  */
 export default function AppsDirectory({
   overlay = false,
@@ -57,6 +57,17 @@ export default function AppsDirectory({
     ? 'absolute inset-0 overflow-hidden'
     : 'relative min-h-dvh overflow-hidden';
   const enter = reveal ? styles.in : styles.inWait;
+
+  const renderVoid = () =>
+    onReenterVoid ? (
+      <button type="button" onClick={onReenterVoid} className={styles.voidLink}>
+        ← void に戻る
+      </button>
+    ) : (
+      <Link href="/" className={styles.voidLink}>
+        ← void に戻る
+      </Link>
+    );
 
   return (
     <main
@@ -77,55 +88,6 @@ export default function AppsDirectory({
       />
 
       <div className={styles.shell}>
-        <aside className={`${enter} ${styles.nav}`}>
-          <p className="text-[9px] tracking-[0.32em] text-[#5fd6ff] uppercase">
-            lab console
-          </p>
-          <h1
-            className="mt-2 font-[family-name:var(--font-cp-display)] text-xl font-extrabold tracking-[0.1em] text-[#effcff]"
-            style={{
-              textShadow: '0 0 16px rgba(0, 220, 255, 0.3)',
-            }}
-          >
-            {LAB_META.site}
-          </h1>
-          <p className="mt-2 text-[12px] text-[#6f97a8]">{LAB_META.tagline}</p>
-
-          <nav className="mt-8 flex flex-1 flex-col gap-1" aria-label="メニュー">
-            {NAV_ITEMS.map((item) => {
-              const active = nav === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setNav(item.id)}
-                  className={`${styles.navBtn} ${active ? styles.navBtnActive : ''}`}
-                >
-                  <span className={styles.navLabel}>{item.label}</span>
-                  <span className={styles.navHint}>{item.hint}</span>
-                </button>
-              );
-            })}
-          </nav>
-
-          {onReenterVoid ? (
-            <button
-              type="button"
-              onClick={onReenterVoid}
-              className="mt-4 cursor-pointer border-0 bg-transparent p-0 text-left text-[11px] tracking-[0.16em] text-[#5a8294] uppercase transition-colors hover:text-[#9fe9ff]"
-            >
-              ← void に戻る
-            </button>
-          ) : (
-            <Link
-              href="/"
-              className="mt-4 text-[11px] tracking-[0.16em] text-[#5a8294] uppercase transition-colors hover:text-[#9fe9ff]"
-            >
-              ← void に戻る
-            </Link>
-          )}
-        </aside>
-
         <div className={`${enter} ${reveal ? styles.d1 : ''} ${styles.main}`}>
           <div className={styles.mobileStatus}>
             <span>
@@ -137,20 +99,35 @@ export default function AppsDirectory({
             <span className={daily.online ? styles.ok : styles.warn}>
               {daily.online ? 'オンライン' : 'オフライン'}
             </span>
+            <span className={styles.mobileVoid}>{renderVoid()}</span>
           </div>
 
           <div className={styles.mainBody}>
             <section className={styles.viewport}>
-              <header className="mb-4">
-                <p className="text-[10px] tracking-[0.28em] text-[#5fd6ff] uppercase">
-                  apps
-                </p>
-                <h2 className="mt-1 font-[family-name:var(--font-cp-display)] text-lg tracking-[0.1em] text-[#effcff]">
-                  {activeNav.label}
-                </h2>
-                <p className="mt-1 text-[12px] text-[#6f97a8]">
-                  {activeNav.hint} · {apps.length} 件
-                </p>
+              <header className={styles.toolbar}>
+                <div className={styles.toolbarLead}>
+                  <h1 className={styles.toolbarTitle}>{activeNav.label}</h1>
+                  <p className={styles.toolbarMeta}>
+                    {activeNav.hint} · {apps.length} 件
+                  </p>
+                </div>
+                <nav className={styles.filters} aria-label="表示の絞り込み">
+                  {NAV_ITEMS.map((item) => {
+                    const active = nav === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setNav(item.id)}
+                        aria-pressed={active}
+                        className={`${styles.filterBtn} ${active ? styles.filterBtnActive : ''}`}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </nav>
+                <div className={styles.desktopVoid}>{renderVoid()}</div>
               </header>
 
               {apps.length === 0 ? (
@@ -201,9 +178,9 @@ export default function AppsDirectory({
                           </div>
                           <div className="px-2 py-1.5">
                             <div className="flex items-baseline justify-between gap-1">
-                              <h3 className="truncate font-[family-name:var(--font-cp-display)] text-[11px] tracking-[0.06em] text-[#e8fbff] transition-colors group-hover:text-[#7aefff]">
+                              <h2 className="truncate font-[family-name:var(--font-cp-display)] text-[11px] tracking-[0.06em] text-[#e8fbff] transition-colors group-hover:text-[#7aefff]">
                                 {app.name}
-                              </h3>
+                              </h2>
                               <span
                                 className={`shrink-0 text-[8px] tracking-[0.12em] ${statusTone(app.status)}`}
                               >

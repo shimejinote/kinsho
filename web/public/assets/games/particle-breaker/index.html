@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-<title>PARTICLE BREAKER 3D</title>
+<title>VOID BREAKER</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -37,7 +37,7 @@
     --field: min(
       96vw,
       1100px,
-      calc((100dvh - 7.5rem) * 480 / 500)
+      calc((100dvh - 7rem) * 480 / 500)
     );
     display: flex;
     flex-direction: column;
@@ -118,6 +118,13 @@
     font-family:'Press Start 2P',monospace; transition:all 0.15s; white-space: nowrap;
   }
   .mode-btn:hover { background:#00ffcc; color:#06060c; box-shadow:0 0 12px #00ffcc; }
+  .mode-btn.on {
+    background: #ffcc00;
+    color: #06060c;
+    border-color: #ffaa00;
+    box-shadow: 0 0 12px rgba(255,204,0,0.55);
+  }
+  .mode-btn.on:hover { background:#ffe066; color:#06060c; }
   .upgrade-icons { display:flex; gap:3px; flex-wrap:wrap; max-width: min(55vw, 280px); justify-content:flex-end; }
   .upg-badge { font-size: clamp(4px, 1vw, 6px); color:#06060c; background:#00ffcc; padding:2px 4px; border-radius:2px; white-space:nowrap; }
 
@@ -127,36 +134,6 @@
   .overlay-sub { font-size: clamp(6px, 1.5vw, 8px); color:#aaa; letter-spacing:2px; animation:blink 1s step-end infinite; text-align:center; }
   .overlay-score { font-size: clamp(8px, 2vw, 12px); color:#ffcc00; text-shadow:0 0 10px #ffcc00; }
   .overlay-desc { font-size: clamp(5px, 1.3vw, 7px); color:#667; letter-spacing:1px; text-align:center; line-height:2.2; }
-
-  .upgrade-screen { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap: clamp(10px, 2vw, 16px); background:rgba(3,3,12,0.95); z-index:20; pointer-events:all; padding: 10px; overflow-y: auto; }
-  .upgrade-screen.hidden { display:none; pointer-events:none; }
-  .upgrade-title { font-size: clamp(9px, 2.4vw, 13px); color:#ffcc00; text-shadow:0 0 12px #ffcc00; letter-spacing:3px; }
-  .upgrade-sub { font-size: clamp(5px, 1.3vw, 7px); color:#667; letter-spacing:1px; margin-top:-6px; text-align:center; }
-  .upgrade-cards { display:flex; flex-wrap: wrap; gap: clamp(8px, 1.5vw, 12px); justify-content: center; max-width: 100%; }
-  .upgrade-card {
-    width: min(124px, 28vw);
-    min-width: 96px;
-    min-height: clamp(130px, 28vw, 160px);
-    border:1px solid #334; background:rgba(0,20,30,0.9);
-    display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
-    padding:12px 8px; gap:8px; cursor:pointer;
-    transition:border-color 0.15s,box-shadow 0.15s,transform 0.1s;
-    border-radius:2px; position:relative; overflow:hidden;
-  }
-  .upgrade-card::before { content:''; position:absolute; inset:0; background:linear-gradient(180deg,rgba(255,255,255,0.03) 0%,transparent 60%); pointer-events:none; }
-  .upgrade-card:hover { transform:translateY(-3px); }
-  .card-rarity-common { border-color:#446; }
-  .card-rarity-rare { border-color:#44a; box-shadow:0 0 8px rgba(80,80,255,0.2); }
-  .card-rarity-epic { border-color:#a4a; box-shadow:0 0 8px rgba(180,80,255,0.25); }
-  .card-rarity-common:hover { border-color:#88ccff; box-shadow:0 0 18px rgba(136,204,255,0.35); }
-  .card-rarity-rare:hover { border-color:#88aaff; box-shadow:0 0 18px rgba(100,150,255,0.45); }
-  .card-rarity-epic:hover { border-color:#cc88ff; box-shadow:0 0 18px rgba(200,100,255,0.45); }
-  .card-icon { font-size: clamp(20px, 4vw, 26px); line-height:1; margin-top:2px; }
-  .card-name { font-size: clamp(5px, 1.3vw, 7px); color:#eee; text-align:center; letter-spacing:1px; line-height:1.6; }
-  .card-desc { font-size: clamp(4.5px, 1.2vw, 6px); color:#889; text-align:center; line-height:2; flex:1; }
-  .card-level { font-size: clamp(4px, 1.1vw, 5px); color:#ffcc00; letter-spacing:1px; }
-  .card-level span { color:#ffee88; }
-  .card-new { font-size: clamp(4px, 1.1vw, 5px); color:#00ffcc; letter-spacing:1px; animation:blink 0.8s step-end infinite; }
 
   @keyframes flicker { 0%,96%,100%{opacity:1} 97%{opacity:.4} 98%{opacity:1} 99%{opacity:.2} }
   @keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
@@ -168,7 +145,6 @@
   @media (max-width: 520px) {
     .title { max-width: 38%; line-height: 1.5; }
     .header { flex-wrap: wrap; }
-    .upgrade-card { width: min(42vw, 140px); }
     .lab-link { padding: 10px 12px; }
   }
 
@@ -195,18 +171,18 @@
 <a class="lab-link" href="/apps/">← LAB</a>
 <div class="game-container">
   <div class="header">
-    <div class="title">PARTICLE BREAKER</div>
+    <div class="title" id="brandTitle">VOID BREAKER</div>
     <div class="score-area">
       <div class="stat"><span class="stat-label">SCORE</span><span class="stat-value" id="scoreDisplay">0</span></div>
-      <div class="stat"><span class="stat-label">STAGE</span><span class="stat-value" id="stageDisplay">1</span></div>
+      <div class="stat"><span class="stat-label">THREAT</span><span class="stat-value" id="threatDisplay">x1.0</span></div>
+      <div class="stat"><span class="stat-label">WAVE</span><span class="stat-value" id="waveDisplay">1</span></div>
       <div class="stat"><span class="stat-label">LV</span><span class="stat-value" id="levelDisplay">1</span></div>
-      <div class="stat"><span class="stat-label">MULTI</span><span class="stat-value" id="multiDisplay">x1.0</span></div>
     </div>
   </div>
 
   <div class="xp-bar-wrap">
     <div class="xp-bar-bg"><div class="xp-bar-fill" id="xpFill"></div></div>
-    <div class="xp-bar-text" id="xpText">LV 1  —  0 / 20 XP</div>
+    <div class="xp-bar-text" id="xpText">LV 1  —  0 / 16 XP</div>
   </div>
 
   <div class="canvas-wrap">
@@ -221,19 +197,14 @@
       <div class="overlay-desc" id="overlayDesc"></div>
       <div class="overlay-sub" id="overlaySub"></div>
     </div>
-
-    <div class="upgrade-screen hidden" id="upgradeScreen">
-      <div class="upgrade-title">LEVEL UP!</div>
-      <div class="upgrade-sub" id="upgradeSubtitle"></div>
-      <div class="upgrade-cards" id="upgradeCards"></div>
-    </div>
   </div>
 
   <div class="footer-row">
-    <span class="balls-label">BALLS: <span class="balls-count" id="ballCount">1</span></span>
+    <span class="balls-label">LIVES: <span class="balls-count" id="livesDisplay">3</span></span>
     <div class="controls">
       <div class="upgrade-icons" id="upgradeIcons"></div>
-      <div class="mode-btn" id="modeBtn">[V] 3D</div>
+      <div class="mode-btn" id="autoBtn" title="Debug autopilot">[A] AUTO</div>
+      <div class="mode-btn" id="modeBtn">[V] FLAT</div>
     </div>
   </div>
 </div>
@@ -245,9 +216,8 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const W = canvas.width, H = canvas.height;
-const PAD_BASE_W = 90, PAD_H = 10, PAD_Y = H - 28;
+const PAD_BASE_W = 72, PAD_H = 16, PAD_Y = H - 32;
 const BALL_SPEED_BASE = 6;
-const FIELD_ROWS = 92;
 
 // Offscreen buffer for the flat field (warped in 3D mode)
 const off = document.createElement('canvas');
@@ -260,89 +230,557 @@ const glow = document.createElement('canvas');
 glow.width = GLOW_W; glow.height = GLOW_H;
 const glowCtx = glow.getContext('2d');
 
-// Entity caps — prevent exponential ball/particle growth from freezing the game
-const MAX_BALLS = 220;
-const MAX_PARTICLES = 2000;
-const MAX_STEPS = 24;
+// Entity caps — soft ball budget (recycle, never silent-drop catches)
+const MAX_BALLS = 140;
+const MAX_PARTICLES = 700;
+const MAX_STEPS = 14;
+const MAX_DRAW_PARTICLES = 420;
+const MAX_DRAW_BALLS = 100;
+const BALL_STEP_BUDGET = 2200; // ~steps×balls per frame soft ceiling
 
-// 3D projection params
-let renderMode = '3d';            // '2d' | '3d'
-const FAR = 2.2;
-const SCREEN_TOP = 60, SCREEN_BOTTOM = PAD_Y, SRC_H = PAD_Y;
+/** Height layer — 0 = floor plane, 1 = floating toward camera (exaggerated for readability) */
+const Z_LIFT = 78;
+const CATCH_Z = 0.38;
+const BALL_CRUISE_Z = 0.48;
+
+
+// 3D projection params — boot flat; auto tilt rises toward full mode-7
+let renderMode = '2d';            // '2d' | '3d' — lock target / UI when locked
+let modeAuto = true;              // true: tilt follows progression; [V] locks/cycles
+const FAR_FLAT = 1.035;           // nearly orthographic (table face-on)
+const FAR_FULL = 2.2;             // full mode-7 plunge
+const SCREEN_TOP_FULL = 60;
+const SCREEN_BOTTOM = PAD_Y, SRC_H = PAD_Y;
+/** @deprecated alias — prefer farForTilt / topForTilt */
+const FAR = FAR_FULL;
+const SCREEN_TOP = SCREEN_TOP_FULL;
 let camSway = 0;
-let energyPhase = 0;              // animated energy sweep for hi-tech block look
+let energyPhase = 0;
 
-// ═══════════════════════════════════════════════════════
-//  STAGE DEFINITIONS
-// ═══════════════════════════════════════════════════════
-const STAGES = [
-  { name:'W1-1  SOLID WALL', rows:46, hue:0,   pattern:(x,y,r)=>({hp:1}) },
-  { name:'W1-2  TWIN GAP', rows:50, hue:30,    pattern:(x,y,r)=> (x>150&&x<185)||(x>295&&x<330) ? null : {hp:1} },
-  { name:'W1-3  STRIPES', rows:54, hue:55,     pattern:(x,y,r)=> (Math.floor(y/6)%2===0) ? {hp:1} : (Math.floor(x/30)%2===0?{hp:1}:null) },
-  { name:'W1-4  FORTRESS', rows:56, hue:90,    pattern:(x,y,r)=>{ const e=(x%60<3)||(y%14<2); return e?{hp:3,armored:true}:{hp:1}; } },
-  { name:'W2-1  COLUMNS', rows:58, hue:120,    pattern:(x,y,r)=> (Math.floor(x/24)%2===0)?{hp:1}:null },
-  { name:'W2-2  BRICKWORK', rows:60, hue:150,  pattern:(x,y,r)=>{ const o=(Math.floor(y/8)%2)*16; const gap=((x+o)%32)<2; const gy=(y%8)<1; return (gap||gy)?null:{hp:1}; } },
-  { name:'W2-3  CHECKER ARMOR', rows:60, hue:180, pattern:(x,y,r)=>{ const cx=Math.floor(x/16),cy=Math.floor(y/8); return ((cx+cy)%2===0)?{hp:2,armored:true}:{hp:1}; } },
-  { name:'W2-4  LATTICE', rows:62, hue:205,    pattern:(x,y,r)=>{ const v=(x%28)<3,h=(y%10)<2; return (v||h)?{hp:2,armored:true}:{hp:1}; } },
-  { name:'W3-1  RINGS', rows:70, hue:230,      pattern:(x,y,r)=>{ const dx=(x-240)/240,dy=(y-r/2)/(r/2); const d=Math.sqrt(dx*dx+dy*dy); const b=Math.floor(d*8)%2; return d<1.05?(b===0?{hp:1}:{hp:2,armored:true}):null; } },
-  { name:'W3-2  DIAMOND CORE', rows:72, hue:260, pattern:(x,y,r)=>{ const d=Math.abs(x-240)/240+Math.abs(y-r/2)/(r/2); if(d<0.3)return{hp:5,armored:true,xp:4}; if(d<1.0)return{hp:1}; return null; } },
-  { name:'W3-3  SINE WAVE', rows:74, hue:290,  pattern:(x,y,r)=>{ const w=r/2+Math.sin(x/30)*r*0.35; return Math.abs(y-w)<r*0.28?{hp:1}:null; } },
-  { name:'W3-4  SPIRAL', rows:78, hue:320,     pattern:(x,y,r)=>{ const dx=x-240,dy=y-r/2; const a=Math.atan2(dy,dx); const rad=Math.sqrt(dx*dx+dy*dy); const sp=(a+rad/14)%(Math.PI/2); return (sp>0&&sp<Math.PI/4&&rad<r*0.9)?{hp:1}:null; } },
-  { name:'W4-1  TWIN CORES', rows:78, hue:350, pattern:(x,y,r)=>{ const d1=Math.hypot((x-150)/120,(y-r/2)/(r/2)); const d2=Math.hypot((x-330)/120,(y-r/2)/(r/2)); if(d1<0.3||d2<0.3)return{hp:5,armored:true,xp:4}; return (d1<1||d2<1)?{hp:1}:null; } },
-  { name:'W4-2  SCATTER STORM', rows:80, hue:20, pattern:(x,y,r)=>{ const arm=(x*7+y*13)%11===0; const hole=(x*3+y*5)%17===0; if(hole)return null; return arm?{hp:3,armored:true}:{hp:1}; } },
-  { name:'W4-3  PYRAMID', rows:82, hue:45,     pattern:(x,y,r)=>{ const w=(y/r)*240; return Math.abs(x-240)<w?{hp:1+Math.floor(y/20),armored:y>r*0.6}:null; } },
-  { name:'W4-4  BOSS — MEGA CORE', rows:88, hue:0, pattern:(x,y,r)=>{ const d=Math.hypot((x-240)/200,(y-r/2)/(r/2)); if(d<0.45)return{hp:8,armored:true,xp:6}; if(d<0.75)return{hp:3,armored:true,xp:2}; if(d<1.05)return{hp:1}; return null; } },
-];
+function smooth01(x){
+  const t = Math.min(1, Math.max(0, x));
+  return t * t * (3 - 2 * t);
+}
 
-function getStageDef(s) {
-  if (s <= STAGES.length) return STAGES[s-1];
-  const base = STAGES[(s-1) % STAGES.length];
-  const over = s - STAGES.length;
-  return {
-    name: `∞-${over}  ENDLESS`,
-    rows: Math.min(FIELD_ROWS, base.rows + over*2),
-    hue: (base.hue + over*35) % 360,
-    pattern: (x,y,r) => { const b=base.pattern(x,y,r); if(b&&b.hp){ b.hp+=Math.floor(over/2); if(over>=4)b.armored=true; } return b; }
-  };
+/**
+ * 0 = flat table · 1 = fully tipped into the void.
+ * Very slow burn: only a hint for many clears; near-full around wave 14–18.
+ */
+function perspectiveFromProgress(){
+  const fromClears = (wave - 1) * 0.28;
+  const fromBroken = blocksBroken / 1600;
+  const pressure = fromClears + fromBroken;
+  return smooth01((pressure - 0.5) / 16);
+}
+function effectivePerspective(){
+  if(!modeAuto) return renderMode === '3d' ? 1 : 0;
+  return perspectiveFromProgress();
+}
+/** How far the camera has tipped — drives foreshortening. */
+function farForTilt(a){
+  const t = smooth01(a);
+  // Ease-in so early lean is gentle, late tilt digs deep
+  const k = t * t;
+  return FAR_FLAT + (FAR_FULL - FAR_FLAT) * k;
+}
+/** Sky band grows as the far edge tips away. */
+function topForTilt(a){
+  return Math.floor(SCREEN_TOP_FULL * smooth01(a));
 }
 
 // ═══════════════════════════════════════════════════════
-//  UPGRADES
+//  VISIT PALETTE (Void sky mood — PRNG per run, no Three.js)
+// ═══════════════════════════════════════════════════════
+let visitPalette = {
+  hue: 180,
+  fog: [6, 6, 12],
+  core: [200, 230, 255],
+  accent: [0, 255, 204],
+};
+/** Clear ritual: frames left / max, timeScale for soft slowdown. */
+let clearRitualT = 0, clearRitualMax = 1, timeScale = 1;
+/** Short suction amplify (frames). */
+let suctionBoost = 0;
+/** Catch success rings (portal mouth feedback). */
+let catchRings = [];
+
+function mulberry32(seed){
+  let a = seed >>> 0;
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function generateVisitPalette(seed){
+  const rnd = mulberry32(seed == null
+    ? (Date.now() ^ (Math.random() * 0x100000000)) >>> 0
+    : seed >>> 0);
+  const hue = rnd() * 360;
+  const fogHue = (hue + 190 + rnd() * 50) % 360;
+  const coreHue = (hue + rnd() * 28) % 360;
+  const accentHue = (hue + 140 + rnd() * 50) % 360;
+  const fog = hsv2rgb(fogHue, 0.28 + rnd() * 0.35, 0.035 + rnd() * 0.055);
+  const core = hsv2rgb(coreHue, 0.18 + rnd() * 0.28, 0.92 + rnd() * 0.08);
+  const accent = hsv2rgb(accentHue, 0.78 + rnd() * 0.2, 0.95 + rnd() * 0.05);
+  visitPalette = { hue, fog, core, accent };
+  applyVisitChrome();
+  return visitPalette;
+}
+function accentCss(){
+  const [r,g,b] = visitPalette.accent;
+  return `rgb(${r},${g},${b})`;
+}
+function applyVisitChrome(){
+  const [r,g,b] = visitPalette.accent;
+  const accent = `rgb(${r},${g},${b})`;
+  const title = document.getElementById('brandTitle');
+  if(title){
+    title.style.color = accent;
+    title.style.textShadow = `0 0 10px ${accent}, 0 0 20px ${accent}`;
+  }
+  canvas.style.borderColor = accent;
+  canvas.style.boxShadow = `0 0 20px rgba(${r},${g},${b},0.4), 0 0 60px rgba(${r},${g},${b},0.1)`;
+}
+
+// ═══════════════════════════════════════════════════════
+//  BOSS + STAR DROPS (exponential threat)
+// ═══════════════════════════════════════════════════════
+
+/** Exponential run pressure from clears + damage + level. */
+function computeThreat(){
+  const fromClears = (wave - 1) * 1.55;
+  const fromBroken = blocksBroken / 110;
+  return Math.pow(1.14, fromClears + fromBroken);
+}
+function threatLabel(){
+  return `x${computeThreat().toFixed(1)}`;
+}
+function currentBallSpeed(){
+  // Soft start, then exponential climb with a hard cap for playability
+  const t = computeThreat();
+  return Math.min(13.5, BALL_SPEED_BASE * Math.pow(t, 0.42));
+}
+function scaleBallSpeeds(){
+  const target = currentBallSpeed();
+  for(const ball of balls){
+    const spd = Math.hypot(ball.vx, ball.vy);
+    if(spd < 0.1) continue;
+    const n = target / spd;
+    ball.vx *= n;
+    ball.vy *= n;
+  }
+}
+
+/** Stars caught / boss chips — drives threat & tilt. */
+function noteProgress(n=1){ blocksBroken += n; }
+
+function bossMaxHp(w){
+  return Math.round(28 * Math.pow(1.42, w - 1));
+}
+function bossDropInterval(w){
+  // Wave 1: no bombs. Later waves stay leisurely.
+  if(w <= 1) return 1e9;
+  return Math.max(48, Math.round(110 - w * 5 + Math.random() * 24));
+}
+
+/** Classic invader silhouette (11×8), 1 = body pixel. */
+const INVADER = [
+  [0,0,1,0,0,0,0,0,1,0,0],
+  [0,1,0,1,0,1,0,1,0,1,0],
+  [0,1,1,1,1,1,1,1,1,1,0],
+  [1,1,0,1,1,0,1,1,0,1,1],
+  [1,1,1,1,1,1,1,1,1,1,1],
+  [0,1,0,1,1,1,1,1,0,1,0],
+  [1,0,1,0,0,0,0,0,1,0,1],
+  [0,1,1,0,0,0,0,0,1,1,0],
+];
+const INV_CELL = 6; // pixel size in field space
+
+let boss = null;
+
+function spawnBoss(){
+  const maxHp = bossMaxHp(wave);
+  const bw = INVADER[0].length * INV_CELL;
+  const bh = INVADER.length * INV_CELL;
+  const baseY = Math.min(SRC_H * 0.22, 88);
+  boss = {
+    x: W * 0.5,
+    y: baseY,
+    baseY,
+    w: bw,
+    h: bh,
+    hp: maxHp,
+    maxHp,
+    vx: (Math.random() < 0.5 ? -1 : 1) * (wave <= 1 ? 0.22 : 0.28 + wave * 0.035),
+    phase: 0,
+    dropCd: wave <= 1 ? 1e9 : bossDropInterval(wave) * 0.85,
+    flash: 0,
+  };
+}
+
+function onBossDefeated(){
+  wave++;
+  const bonus = Math.round(220 * Math.pow(1.35, wave - 2));
+  score += bonus;
+  soundClear();
+  showBanner(wave === 2 ? `BOMBS ONLINE  ·  THREAT ${threatLabel()}` : `BOSS DOWN  ·  THREAT ${threatLabel()}`);
+  clearRitualMax = Math.round((180 + Math.random() * 140) / (1000 / 60));
+  clearRitualT = clearRitualMax;
+  suctionBoost = Math.max(suctionBoost, 22);
+  applyRandomUpgrade();
+  spawnBoss();
+  scaleBallSpeeds();
+  // Mild celebration sparkles — not a bomb rain
+  const [cr,cg,cb] = visitPalette.core;
+  if(wave >= 2){
+    for(let i=0;i<3;i++){
+      spawnStarDrop(
+        W*0.5 + (Math.random()-0.5)*36,
+        Math.min(SRC_H*0.22, 88),
+        { r:cr, g:cg, b:cb },
+      );
+    }
+  }
+  if(balls.length===0){
+    const spd=currentBallSpeed();
+    spawnBall(W/2, H*0.55, 0, -spd, [255,255,255]);
+  }
+  updateUI();
+}
+
+function spawnStarDrop(x, y, color){
+  if(fallParticles.length>=MAX_PARTICLES) return;
+  const ang = Math.PI*0.5 + (Math.random()-0.5)*0.7;
+  const z0 = 1.0;
+  fallParticles.push({
+    x, y,
+    vx: Math.cos(ang)*(0.2+Math.random()*0.7)*(Math.random()<0.5?-1:1),
+    vy: 0.55+Math.random()*0.55,
+    z: z0,
+    vz: -0.002,
+    r: color.r, g: color.g, b: color.b,
+    phase: Math.random()*Math.PI*2,
+    spark: 0.9+Math.random()*0.5,
+    kind: 'star',
+  });
+}
+
+function applyBossDamage(dmg, hitX){
+  if(!boss || boss.hp<=0) return false;
+  boss.hp = Math.max(0, boss.hp - dmg);
+  boss.flash = 8;
+  noteProgress(dmg);
+  score += Math.round(scoreMultiplier * comboMultiplier * dmg);
+  gainXP(dmg);
+  comboCount++;
+  comboTimer = 60;
+  if(comboCount>=3){ comboMultiplier=1+Math.floor(comboCount/3)*0.5; updateComboDisplay(); }
+  if(comboCount>=6&&comboCount%3===0) suctionBoost=Math.max(suctionBoost, 16+Math.min(12, Math.floor(comboCount/2)));
+  soundBlock(hitX|0);
+  if(boss.hp<=0) onBossDefeated();
+  return true;
+}
+
+function bossContains(px, py){
+  if(!boss || boss.hp<=0) return false;
+  const left = boss.x - boss.w*0.5;
+  const right = boss.x + boss.w*0.5;
+  const top = boss.y - boss.h*0.5;
+  const bottom = boss.y + boss.h*0.5;
+  return px>=left && px<=right && py>=top && py<=bottom;
+}
+
+function hitBoss(ball, opts){
+  if(!bossContains(ball.x, ball.y)) return false;
+
+  let dmg = 1 + (upgrades.pierce|0);
+  if(upgrades.blockBurst) dmg += 2;
+  if(upgrades.chainBlast && comboCount>0 && comboCount%8===0) dmg += 6;
+  applyBossDamage(dmg, ball.x);
+
+  const pierce = !!(opts && opts.pierce);
+  if(!pierce && boss){
+    const left = boss.x - boss.w*0.5;
+    const right = boss.x + boss.w*0.5;
+    const top = boss.y - boss.h*0.5;
+    const bottom = boss.y + boss.h*0.5;
+    const cx=boss.x, cy=boss.y;
+    const dx=ball.x-cx, dy=ball.y-cy;
+    if(Math.abs(dx)*boss.h > Math.abs(dy)*boss.w){
+      ball.vx = Math.abs(ball.vx) * (dx<0?-1:1);
+      ball.x = dx<0 ? left-1 : right+1;
+    } else {
+      ball.vy = Math.abs(ball.vy) * (dy<0?-1:1);
+      ball.y = dy<0 ? top-1 : bottom+1;
+    }
+  }
+  return true;
+}
+
+// ═══════════════════════════════════════════════════════
+//  PLAYER SHOTS (Invaders-style auto fire)
+// ═══════════════════════════════════════════════════════
+const SHOT_INTERVAL_BASE = 15;
+const SHOT_SPEED = 10;
+const MAX_SHOTS = 36;
+let shots = [];
+let shotCd = 0;
+let fireBoost = 0;
+
+function shotInterval(){
+  let n = SHOT_INTERVAL_BASE;
+  n -= (upgrades.doubleTap|0) * 2.2;
+  n -= Math.min(4, upgrades.multiball|0);
+  if(fireBoost > 0) n *= 0.55;
+  return Math.max(6, n);
+}
+
+function fireShot(x, y, vx, vy){
+  if(shots.length >= MAX_SHOTS) shots.shift();
+  shots.push({
+    x, y, vx, vy,
+    pierce: upgrades.pierce|0,
+  });
+}
+
+function tryFirePlayer(dt){
+  if(fireBoost > 0) fireBoost -= dt;
+  shotCd -= dt;
+  if(shotCd > 0) return;
+  shotCd = shotInterval();
+  const cx = padX + PAD_W * 0.5;
+  const sy = PAD_Y - 1;
+  fireShot(cx, sy, 0, -SHOT_SPEED);
+  // Side cannons from multiball stacks
+  const sides = Math.min(2, upgrades.multiball|0);
+  for(let i = 0; i < sides; i++){
+    const ox = 10 + i * 9;
+    fireShot(cx - ox, sy, -0.35 * (i + 1), -SHOT_SPEED);
+    fireShot(cx + ox, sy,  0.35 * (i + 1), -SHOT_SPEED);
+  }
+  soundShot();
+}
+
+function updateShots(dt){
+  tryFirePlayer(dt);
+  let w = 0;
+  for(let i = 0; i < shots.length; i++){
+    const s = shots[i];
+    s.x += s.vx * dt;
+    s.y += s.vy * dt;
+    if(s.y < -12 || s.x < -16 || s.x > W + 16) continue;
+    if(bossContains(s.x, s.y)){
+      let dmg = 1;
+      if(upgrades.blockBurst) dmg += 1;
+      if(upgrades.chainBlast && comboCount > 0 && comboCount % 8 === 0) dmg += 4;
+      applyBossDamage(dmg, s.x);
+      if(upgrades.chainBlast && comboCount % 8 === 0) triggerChainBlast(s.x, s.y);
+      if(s.pierce > 0){
+        s.pierce--;
+        s.y -= 6; // slip through so one frame doesn't re-hit forever
+        shots[w++] = s;
+      }
+      continue;
+    }
+    shots[w++] = s;
+  }
+  shots.length = w;
+}
+
+function drawPlayerShots(){
+  if(!shots.length) return;
+  const persp = effectivePerspective();
+  const [ar, ag, ab] = visitPalette.accent;
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  for(let i = 0; i < shots.length; i++){
+    const s = shots[i];
+    let sx = s.x, sy = s.y, sc = 1;
+    if(persp > 0.01 && s.y < SRC_H){
+      const p = proj(s.x, Math.max(0, s.y), persp);
+      sx = p.sx; sy = p.sy; sc = Math.max(0.55, p.scale);
+    }
+    ctx.fillStyle = `rgb(${Math.min(255, ar + 90)},${Math.min(255, ag + 70)},255)`;
+    const bw = 2.2 * sc, bh = 7 * sc;
+    ctx.fillRect(sx - bw * 0.5, sy - bh, bw, bh);
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(sx - 0.7 * sc, sy - bh * 0.85, 1.4 * sc, bh * 0.55);
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+}
+
+function updateBoss(dt){
+  if(!boss || gameState!=='playing') return;
+  boss.phase += 0.08*dt;
+  if(boss.flash>0) boss.flash--;
+  boss.x += boss.vx*dt;
+  const margin = boss.w*0.5 + 8;
+  const stepDown = () => {
+    // Wave 1 barely descends — tutorial pace
+    if(wave <= 1) boss.baseY += 0.9;
+    else boss.baseY += 1.8 + wave * 0.22;
+  };
+  if(boss.x < margin){ boss.x=margin; boss.vx=Math.abs(boss.vx); stepDown(); }
+  if(boss.x > W-margin){ boss.x=W-margin; boss.vx=-Math.abs(boss.vx); stepDown(); }
+  // Subtle bob on top of descent line
+  boss.y = boss.baseY + Math.sin(boss.phase)*6;
+
+  // Invaders rule: reach the ship line → game over
+  if(boss.y + boss.h * 0.5 >= PAD_Y - 6){
+    gameOver();
+    return;
+  }
+
+  boss.dropCd -= dt;
+  if(wave >= 2 && boss.dropCd <= 0){
+    boss.dropCd = bossDropInterval(wave);
+    const [cr,cg,cb]=visitPalette.core;
+    const [ar,ag,ab]=visitPalette.accent;
+    const useCore = Math.random()<0.55;
+    spawnStarDrop(
+      boss.x + (Math.random()-0.5)*boss.w*0.45,
+      boss.y + boss.h*0.35,
+      useCore ? {r:cr,g:cg,b:cb} : {r:ar,g:ag,b:ab},
+    );
+    // Rare extra bomb — only mid/late waves
+    if(wave>=6 && Math.random()<0.1){
+      spawnStarDrop(
+        boss.x + (Math.random()-0.5)*boss.w*0.45,
+        boss.y + boss.h*0.35,
+        {r:255,g:240,b:180},
+      );
+    }
+  }
+}
+
+function drawBossToData(data){
+  if(!boss) return;
+  const [ar,ag,ab]=visitPalette.accent;
+  const [cr,cg,cb]=visitPalette.core;
+  const flash = boss.flash>0;
+  const anim = Math.floor(boss.phase)%2;
+  const left = Math.round(boss.x - boss.w*0.5);
+  const top = Math.round(boss.y - boss.h*0.5);
+  for(let row=0; row<INVADER.length; row++){
+    for(let col=0; col<INVADER[row].length; col++){
+      if(!INVADER[row][col]) continue;
+      // Legs shuffle like classic invaders
+      let c = col;
+      if(anim && (row===6||row===7)) c = INVADER[row].length-1-col;
+      const px0 = left + c*INV_CELL;
+      const py0 = top + row*INV_CELL;
+      for(let dy=0; dy<INV_CELL; dy++)for(let dx=0; dx<INV_CELL; dx++){
+        const px=px0+dx, py=py0+dy;
+        if(px<0||px>=W||py<0||py>=H) continue;
+        const idx=(py*W+px)*4;
+        const edge = dx===0||dy===0||dx===INV_CELL-1||dy===INV_CELL-1;
+        const r = flash ? 255 : (edge ? Math.min(255,ar+40) : Math.min(255, ar*0.55+cr*0.45));
+        const g = flash ? 255 : (edge ? Math.min(255,ag+20) : Math.min(255, ag*0.55+cg*0.45));
+        const b = flash ? 255 : (edge ? Math.min(255,ab+30) : Math.min(255, ab*0.55+cb*0.45));
+        data[idx]=r; data[idx+1]=g; data[idx+2]=b; data[idx+3]=255;
+      }
+    }
+  }
+}
+
+function drawBossHpBar(){
+  if(!boss || gameState!=='playing') return;
+  const pct = boss.hp/boss.maxHp;
+  const bw = 160, bh = 5;
+  const x = (W-bw)*0.5, y = 10;
+  const [ar,ag,ab]=visitPalette.accent;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.45)';
+  ctx.fillRect(x-1,y-1,bw+2,bh+2);
+  ctx.fillStyle=`rgba(${ar},${ag},${ab},0.25)`;
+  ctx.fillRect(x,y,bw,bh);
+  ctx.fillStyle=`rgb(${ar},${ag},${ab})`;
+  ctx.fillRect(x,y,bw*pct,bh);
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════
+//  AUTO UPGRADES (no pause / no choice — banner only)
 // ═══════════════════════════════════════════════════════
 const UPGRADE_DEFS = {
-  padExpand:  { name:'PAD EXPAND', icon:'▬', rarity:'common', desc:'Paddle width\n+18px', max:6, apply:()=>{ PAD_W=Math.min(220,PAD_W+18); } },
-  multiball:  { name:'MULTIBALL', icon:'◉', rarity:'rare', desc:'+1 ball at\nstage start', max:5, apply:()=>{ upgrades.multiball++; } },
-  scoreFever: { name:'SCORE FEVER', icon:'✦', rarity:'common', desc:'Score & XP\nmult +0.4x', max:10, apply:()=>{ scoreMultiplier+=0.4; } },
-  magnet:     { name:'MAGNET', icon:'⊕', rarity:'rare', desc:'Catch particles\nin range', max:5, apply:()=>{ upgrades.magnet++; } },
-  doubleTap:  { name:'DOUBLE TAP', icon:'»', rarity:'rare', desc:'Chance for\n2 balls/particle', max:4, apply:()=>{ upgrades.doubleTap++; } },
-  pierce:     { name:'PIERCE', icon:'➤', rarity:'rare', desc:'Balls pierce\n+1 block', max:3, apply:()=>{ upgrades.pierce++; } },
-  xpBoost:    { name:'XP BOOST', icon:'✧', rarity:'common', desc:'XP gain\n+30%', max:6, apply:()=>{ upgrades.xpBoost++; } },
-  lastChance: { name:'LAST CHANCE', icon:'↑', rarity:'epic', desc:'Balls bounce\nfrom bottom', max:2, apply:()=>{ upgrades.lastChance++; } },
-  chainBlast: { name:'CHAIN BLAST', icon:'★', rarity:'epic', desc:'8 combo =\narea blast', max:1, apply:()=>{ upgrades.chainBlast=true; } },
-  blockBurst: { name:'BLOCK BURST', icon:'✸', rarity:'epic', desc:'3x3 area\nper hit', max:1, apply:()=>{ upgrades.blockBurst=true; } },
-  gravityWell:{ name:'GRAVITY WELL', icon:'▼', rarity:'rare', desc:'Particles fall\n2x faster', max:1, apply:()=>{ upgrades.gravityWell=true; } },
-  autoDrift:  { name:'AUTO DRIFT', icon:'→', rarity:'epic', desc:'Paddle auto-\ntracks particles', max:1, apply:()=>{ upgrades.autoDrift=true; } },
+  padExpand:  { name:'WING SPAN', icon:'▬', rarity:'common', max:6, apply:()=>{ PAD_W=Math.min(160,PAD_W+14); } },
+  multiball:  { name:'MULTIBALL', icon:'◉', rarity:'rare', max:4, apply:()=>{ upgrades.multiball++; } },
+  scoreFever: { name:'SCORE FEVER', icon:'✦', rarity:'common', max:8, apply:()=>{ scoreMultiplier+=0.35; } },
+  magnet:     { name:'MAGNET', icon:'⊕', rarity:'rare', max:5, apply:()=>{ upgrades.magnet++; } },
+  doubleTap:  { name:'DOUBLE TAP', icon:'»', rarity:'rare', max:4, apply:()=>{ upgrades.doubleTap++; } },
+  pierce:     { name:'PIERCE', icon:'➤', rarity:'rare', max:3, apply:()=>{ upgrades.pierce++; } },
+  xpBoost:    { name:'XP BOOST', icon:'✧', rarity:'common', max:5, apply:()=>{ upgrades.xpBoost++; } },
+  lastChance: { name:'LAST CHANCE', icon:'↑', rarity:'epic', max:2, apply:()=>{ upgrades.lastChance++; } },
+  chainBlast: { name:'CHAIN BLAST', icon:'★', rarity:'epic', max:1, apply:()=>{ upgrades.chainBlast=true; } },
+  blockBurst: { name:'CORE BURST', icon:'✸', rarity:'epic', max:1, apply:()=>{ upgrades.blockBurst=true; } },
+  gravityWell:{ name:'GRAVITY WELL', icon:'▼', rarity:'rare', max:1, apply:()=>{ upgrades.gravityWell=true; } },
+  autoDrift:  { name:'AUTO DRIFT', icon:'→', rarity:'epic', max:1, apply:()=>{ upgrades.autoDrift=true; } },
 };
 
 // ═══════════════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════════════
-let score=0, best=0, stage=1, playerLevel=1;
-let xp=0, xpNeeded=20;
+let score=0, best=0, wave=1, playerLevel=1, blocksBroken=0;
+let xp=0, xpNeeded=16;
 let scoreMultiplier=1.0;
 let gameState='start';
-let blocks, fallParticles, balls;
-let blockCount=0;
+let fallParticles, balls;
 let PAD_W=PAD_BASE_W, padX=W/2-PAD_W/2;
-let curStageRows=46, curHue=0;
-let upgrades={}, upgradeLevels={};
+let upgrades={};
+let upgradeLevels={};
 let comboCount=0, comboTimer=0, comboMultiplier=1;
 let bannerTimer=0;
-let pendingLevelUps=0;
+let threatSpeedBucket=0;
+let playerLives=3;
+let hurtCd=0;
+const PLAYER_LIVES_MAX=3;
 
 function resetUpgrades(){
   upgrades={ multiball:0,magnet:0,doubleTap:0,pierce:0,xpBoost:0,lastChance:0,chainBlast:false,blockBurst:false,gravityWell:false,autoDrift:false };
-  upgradeLevels={}; scoreMultiplier=1.0; PAD_W=PAD_BASE_W;
+  upgradeLevels={};
+  scoreMultiplier=1.0;
+  PAD_W=PAD_BASE_W;
+  playerLevel=1; xp=0; xpNeeded=16;
+}
+
+function pickRandomUpgradeId(){
+  const avail=[];
+  for(const [id,def] of Object.entries(UPGRADE_DEFS)){
+    const lv=upgradeLevels[id]||0;
+    if(lv<def.max) avail.push(id);
+  }
+  if(!avail.length) return null;
+  return avail[Math.floor(Math.random()*avail.length)];
+}
+function applyRandomUpgrade(){
+  const id=pickRandomUpgradeId();
+  if(!id) return false;
+  const def=UPGRADE_DEFS[id];
+  upgradeLevels[id]=(upgradeLevels[id]||0)+1;
+  def.apply();
+  soundUpgrade();
+  showBanner(`${def.icon} ${def.name}`);
+  updateUpgradeBadges();
+  updateUI();
+  return true;
+}
+function gainXP(amount){
+  if(!amount) return;
+  const boost=1+upgrades.xpBoost*0.3;
+  xp+=amount*boost;
+  let guard=0;
+  while(xp>=xpNeeded && guard++<40){
+    xp-=xpNeeded;
+    playerLevel++;
+    xpNeeded=Math.round(xpNeeded*1.18+6);
+    applyRandomUpgrade();
+    scaleBallSpeeds();
+  }
+  updateXPBar();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -357,59 +795,49 @@ function hsv2rgb(h,s,v){
 }
 
 // ═══════════════════════════════════════════════════════
-//  STAGE / BLOCKS
-// ═══════════════════════════════════════════════════════
-function initStage(){
-  const def=getStageDef(stage);
-  curStageRows=def.rows; curHue=def.hue;
-  blocks=new Array(W*FIELD_ROWS).fill(null);
-  blockCount=0;
-  for(let x=0;x<W;x++){
-    const [r,g,b]=hsv2rgb(360*x/W + curHue, 0.85, 0.95);
-    for(let y=0;y<def.rows;y++){
-      const type=def.pattern(x,y,def.rows);
-      if(type){
-        blocks[x+y*W]={ r,g,b, hp:type.hp||1, maxHp:type.hp||1, armored:type.armored||false, xp:type.xp||1 };
-        blockCount++;
-      }
-    }
-  }
-  fallParticles=[];
-}
-
-function hitBlock(x,y){
-  const ix=Math.round(x),iy=Math.round(y);
-  if(ix<0||ix>=W||iy<0||iy>=FIELD_ROWS) return null;
-  const idx=ix+iy*W, b=blocks[idx];
-  if(!b) return null;
-  b.hp--;
-  if(b.hp<=0){ blocks[idx]=null; blockCount--; return {destroyed:true,r:b.r,g:b.g,b:b.b,xp:b.xp}; }
-  b.r=Math.round(b.r*0.7); b.g=Math.round(b.g*0.7); b.b=Math.round(b.b*0.7);
-  return {destroyed:false,r:b.r,g:b.g,b:b.b,xp:0};
-}
-
-function destroyArea(cx,cy,radius){
-  const out=[];
-  for(let dy=-radius;dy<=radius;dy++)for(let dx=-radius;dx<=radius;dx++){
-    const ix=Math.round(cx)+dx,iy=Math.round(cy)+dy;
-    if(ix<0||ix>=W||iy<0||iy>=FIELD_ROWS) continue;
-    const idx=ix+iy*W,b=blocks[idx];
-    if(b){ blocks[idx]=null; blockCount--; out.push({x:ix,y:iy,r:b.r,g:b.g,b:b.b,xp:b.xp}); }
-  }
-  return out;
-}
-
-// ═══════════════════════════════════════════════════════
 //  BALLS
 // ═══════════════════════════════════════════════════════
-function spawnBall(x,y,vx,vy,color){ if(balls.length>=MAX_BALLS) return; balls.push({x,y,vx,vy,color,bounceLeft:upgrades.lastChance}); }
+function spawnBall(x,y,vx,vy,color,z){
+  const next={
+    x,y,vx,vy,color,
+    bounceLeft:upgrades.lastChance,
+    z: z == null ? BALL_CRUISE_Z : Math.max(0.06, Math.min(1, z)),
+    vz: 0,
+  };
+  if(balls.length<MAX_BALLS){
+    balls.push(next);
+    return;
+  }
+  // At budget: recycle the least useful ball — never steal ones diving at the paddle
+  let worst=0, worstScore=-1e9;
+  for(let i=0;i<balls.length;i++){
+    const b=balls[i];
+    const spd=Math.hypot(b.vx,b.vy);
+    let s;
+    if(b.y > PAD_Y + PAD_H){
+      // Already past the portal — safe to replace
+      s = 20000 + b.y;
+    } else if(b.y > PAD_Y - 36 && b.vy > 0){
+      // Approaching the bar — keep these
+      s = -10000 - b.y;
+    } else if(spd < 1.2){
+      s = 8000;
+    } else {
+      // Prefer quiet / high balls over mid-field action
+      s = (H - b.y) * 0.5 - spd;
+    }
+    if(s>worstScore){ worstScore=s; worst=i; }
+  }
+  balls[worst]=next;
+}
 function initBalls(){
   balls=[];
   const count=1+upgrades.multiball;
+  const spd=currentBallSpeed();
+  const startY=H*0.58;
   for(let i=0;i<count;i++){
-    const spd=BALL_SPEED_BASE+(stage-1)*0.25;
     const a=-Math.PI/2+(i-(count-1)/2)*0.3;
-    spawnBall(W/2+(i-(count-1)/2)*20,H/2,Math.cos(a)*spd,Math.sin(a)*spd,[255,255,255]);
+    spawnBall(W/2+(i-(count-1)/2)*20,startY,Math.cos(a)*spd,Math.sin(a)*spd,[255,255,255]);
   }
 }
 
@@ -417,52 +845,67 @@ function initBalls(){
 //  FLOW
 // ═══════════════════════════════════════════════════════
 function startGame(){
-  score=0; stage=1; playerLevel=1; xp=0; xpNeeded=20; pendingLevelUps=0;
-  comboCount=0; comboMultiplier=1;
+  score=0; wave=1; blocksBroken=0;
+  comboCount=0; comboMultiplier=1; threatSpeedBucket=0;
+  playerLives=PLAYER_LIVES_MAX; hurtCd=0;
+  clearRitualT=0; timeScale=1; suctionBoost=0; catchRings=[];
+  shots=[]; shotCd=0; fireBoost=0;
+  generateVisitPalette();
   resetUpgrades(); padX=W/2-PAD_W/2;
-  initStage(); initBalls();
+  fallParticles=[];
+  spawnBoss(); initBalls();
+  // Wave 1: no falling stars — learn to shoot first
   gameState='playing';
-  hideOverlay(); hideUpgradeScreen();
-  showBanner(getStageDef(1).name);
-  updateUI(); updateXPBar();
+  hideOverlay();
+  showBanner('WAVE 1  ·  NO BOMBS');
+  updateUI(); updateUpgradeBadges(); updateXPBar();
 }
-function gainXP(amount){
-  const boost=1+upgrades.xpBoost*0.3;
-  xp+=amount*boost;
-  let guard=0;
-  while(xp>=xpNeeded && guard++<100){ xp-=xpNeeded; playerLevel++; xpNeeded=Math.round(xpNeeded*1.25+8); triggerLevelUp(); }
-  updateXPBar();
-}
-function triggerLevelUp(){ pendingLevelUps++; if(gameState==='playing') showUpgradeScreen(); }
-function stageClear(){
-  if(score>best) best=score;
-  gameState='stageclear';
-  score+=500+stage*100;
-  soundClear();
-  showOverlay(`STAGE ${stage} CLEAR!`,'#00ffcc',`BONUS +${500+stage*100}`,'SPACE / CLICK FOR NEXT STAGE',`SCORE: ${score}`);
+function loseLife(){
+  if(gameState!=='playing') return;
+  if(hurtCd>0) return;
+  // LAST CHANCE upgrade absorbs one hit
+  if((upgrades.lastChance|0)>0){
+    upgrades.lastChance--;
+    if(upgradeLevels.lastChance) upgradeLevels.lastChance=Math.max(0,(upgradeLevels.lastChance|0)-1);
+    updateUpgradeBadges();
+    hurtCd=100;
+    showBanner('LAST CHANCE');
+    soundWall();
+    return;
+  }
+  playerLives--;
+  hurtCd=100;
+  suctionBoost=Math.max(suctionBoost, 16);
+  soundGameOverHit();
   updateUI();
-}
-function nextStage(){
-  stage++;
-  padX=Math.max(0,Math.min(W-PAD_W,padX));
-  initStage(); initBalls();
-  comboCount=0; comboMultiplier=1;
-  gameState='playing'; hideOverlay();
-  showBanner(getStageDef(stage).name);
-  if(pendingLevelUps>0) showUpgradeScreen();
-  updateUI();
+  if(playerLives<=0){
+    gameOver();
+  } else {
+    showBanner(`${playerLives} LEFT`);
+  }
 }
 function gameOver(){
+  if(gameState!=='playing') return;
   if(score>best) best=score;
   gameState='over'; soundGameOver();
-  showOverlay('GAME OVER','#ff3366',`STAGE ${stage}  ·  LEVEL ${playerLevel}`,'SPACE / CLICK TO RETRY',`SCORE: ${score}`);
+  showOverlay(
+    'GAME OVER',
+    '#ff3366',
+    `THREAT ${threatLabel()}  ·  WAVE ${wave}  ·  LV ${playerLevel}`,
+    'SPACE / CLICK TO RETRY',
+    `SCORE: ${score}`,
+  );
   updateUI();
 }
 
 // ═══════════════════════════════════════════════════════
 //  PADDLE
 // ═══════════════════════════════════════════════════════
-function padHit(px,py){ const m=upgrades.magnet*20; return px>=padX-m&&px<=padX+PAD_W+m&&py>=PAD_Y-m&&py<=PAD_Y+PAD_H+m; }
+function padHit(px,py){
+  const m=upgrades.magnet*20;
+  // Tall top margin so fast substeps can't tunnel through the portal rim
+  return px>=padX-m&&px<=padX+PAD_W+m&&py>=PAD_Y-4-m&&py<=PAD_Y+PAD_H+m;
+}
 
 // ═══════════════════════════════════════════════════════
 //  UPDATE
@@ -470,46 +913,61 @@ function padHit(px,py){ const m=upgrades.magnet*20; return px>=padX-m&&px<=padX+
 function update(){
   if(gameState!=='playing') return;
   if(bannerTimer>0) bannerTimer--;
-  camSway+=0.012;
-  energyPhase+=0.0045;
 
-  if(upgrades.autoDrift && fallParticles.length>0){
+  // Clear ritual time scale (starts slow, eases back to 1)
+  if(clearRitualT>0){
+    const u=clearRitualT/clearRitualMax;
+    timeScale=0.28+0.72*(1-u);
+    clearRitualT--;
+  } else {
+    timeScale=1;
+  }
+  const dt=timeScale;
+
+  camSway+=0.012*dt;
+  energyPhase+=0.0045*dt;
+  if(suctionBoost>0) suctionBoost--;
+  if(hurtCd>0) hurtCd--;
+
+  // Nudge ball speed as threat crosses thresholds mid-run
+  const speedBucket=Math.floor(computeThreat()*4);
+  if(speedBucket>threatSpeedBucket){
+    threatSpeedBucket=speedBucket;
+    scaleBallSpeeds();
+  }
+
+  if(debugAutopilot){
+    runDebugAutopilot();
+  } else if(upgrades.autoDrift && fallParticles.length>0){
     let c=null,md=Infinity;
     for(const fp of fallParticles){ const d=Math.abs(fp.x-(padX+PAD_W/2)); if(d<md){md=d;c=fp;} }
     if(c){ padX+=((c.x-PAD_W/2)-padX)*0.03; padX=Math.max(0,Math.min(W-PAD_W,padX)); }
   }
   if(comboTimer>0){ comboTimer--; if(comboTimer===0){ comboCount=0; comboMultiplier=1; updateComboDisplay(); } }
 
+  updateBoss(dt);
+  updateShots(dt);
+
   const deadBalls=[];
+  const nBalls=balls.length;
+  const stepCap=nBalls>0
+    ? Math.max(2, Math.min(MAX_STEPS, Math.floor(BALL_STEP_BUDGET/nBalls)))
+    : MAX_STEPS;
   for(const ball of balls){
     const speed=Math.sqrt(ball.vx*ball.vx+ball.vy*ball.vy);
-    const steps=Math.min(MAX_STEPS,Math.ceil(speed));
-    const angle=Math.atan2(ball.vy,ball.vx);
+    const steps=Math.min(stepCap, Math.max(1, Math.ceil(speed)));
     let pierceLeft=upgrades.pierce;
+    let hitBossThisFrame=false;
     for(let i=0;i<steps;i++){
-      ball.x+=ball.vx/steps; ball.y+=ball.vy/steps;
+      ball.x+=(ball.vx/steps)*dt; ball.y+=(ball.vy/steps)*dt;
       if(ball.x<1&&ball.vx<0){ ball.x=1; ball.vx=-ball.vx; soundWall(); }
       if(ball.x>W-1&&ball.vx>0){ ball.x=W-1; ball.vx=-ball.vx; soundWall(); }
       if(ball.y<1&&ball.vy<0){ ball.y=1; ball.vy=-ball.vy; soundWall(); }
 
-      if(ball.y<curStageRows+1){
-        const bx=Math.round(ball.x),by=Math.round(ball.y);
-        let result=null;
-        if(upgrades.blockBurst){
-          const area=destroyArea(bx,by,1);
-          if(area.length>0){ result={destroyed:true}; for(const ab of area){ score+=Math.round(scoreMultiplier*comboMultiplier); gainXP(ab.xp); spawnFallParticle(ab.x,ab.y,angle,ab); } }
-        } else {
-          result=hitBlock(bx,by);
-          if(result&&result.destroyed){ score+=Math.round(scoreMultiplier*comboMultiplier); gainXP(result.xp); spawnFallParticle(bx,by,angle,result); }
-        }
-        if(result){
-          soundBlock(bx);
-          comboCount++; comboTimer=60;
-          if(comboCount>=3){ comboMultiplier=1+Math.floor(comboCount/3)*0.5; updateComboDisplay(); }
-          if(upgrades.chainBlast&&comboCount%8===0) triggerChainBlast(bx,by);
-          if(score%200===0) updateUI();
-          if(pierceLeft>0&&result.destroyed){ pierceLeft--; } else { ball.vy=-ball.vy; }
-        }
+      if(!hitBossThisFrame && hitBoss(ball, {pierce:pierceLeft>0})){
+        hitBossThisFrame=true;
+        if(upgrades.chainBlast&&comboCount%8===0) triggerChainBlast(ball.x,ball.y);
+        if(pierceLeft>0) pierceLeft--;
       }
       if(ball.vy>0&&padHit(ball.x,ball.y)){
         ball.y=PAD_Y-1;
@@ -518,6 +976,8 @@ function update(){
         const na=rel*1.1;
         ball.vx=spd*Math.sin(na); ball.vy=-spd*Math.abs(Math.cos(na));
         if(Math.abs(ball.vy)<2) ball.vy=-2;
+        ball.z = Math.min(ball.z||BALL_CRUISE_Z, 0.14);
+        ball.vz = 0.05 + Math.random() * 0.04;
         soundPaddle();
       }
       if(ball.y>H+10){
@@ -526,51 +986,142 @@ function update(){
       }
     }
   }
-  for(const b of deadBalls){ const i=balls.indexOf(b); if(i!==-1) balls.splice(i,1); }
-
-  const gravMult=upgrades.gravityWell?0.22:0.12;
-  const deadFP=[];
-  for(const fp of fallParticles){
-    fp.vy+=gravMult; fp.x+=fp.vx; fp.y+=fp.vy;
-    if(fp.x<0) fp.x+=W; if(fp.x>=W) fp.x-=W;
-    if(padHit(fp.x,fp.y)){
-      const spd=BALL_SPEED_BASE+(stage-1)*0.25;
-      const a=(Math.random()-0.5)*Math.PI*0.7-Math.PI/2;
-      spawnBall(fp.x,PAD_Y-2,Math.cos(a)*spd,Math.sin(a)*spd,[fp.r,fp.g,fp.b]);
-      if(upgrades.doubleTap>0&&Math.random()<upgrades.doubleTap*0.18){ const a2=(Math.random()-0.5)*Math.PI*0.7-Math.PI/2; spawnBall(fp.x,PAD_Y-2,Math.cos(a2)*spd,Math.sin(a2)*spd,[fp.r,fp.g,fp.b]); }
-      soundSpawn(fp.r,fp.g,fp.b);
-      deadFP.push(fp);
-    } else if(fp.y>H){ deadFP.push(fp); }
+  if(deadBalls.length===1){
+    const i=balls.indexOf(deadBalls[0]); if(i!==-1) balls.splice(i,1);
+  } else if(deadBalls.length>1){
+    const dead=new Set(deadBalls); balls=balls.filter(b=>!dead.has(b));
   }
-  for(const fp of deadFP){ const i=fallParticles.indexOf(fp); if(i!==-1) fallParticles.splice(i,1); }
+
+  // Height spring — balls cruise slightly above the floor plane
+  for(let i=0;i<balls.length;i++){
+    const ball=balls[i];
+    if(ball.z==null) ball.z=BALL_CRUISE_Z;
+    if(ball.vz==null) ball.vz=0;
+    ball.vz += (BALL_CRUISE_Z - ball.z) * 0.05 * dt;
+    ball.vz *= Math.pow(0.92, dt);
+    ball.z += ball.vz * dt;
+    if(ball.z<0.04){ ball.z=0.04; if(ball.vz<0) ball.vz*=-0.35; }
+    if(ball.z>0.95){ ball.z=0.95; ball.vz*=0.5; }
+  }
+
+  const gravMult=upgrades.gravityWell?0.14:0.055;
+  const padCx=padX+PAD_W/2;
+  const padCy=PAD_Y+PAD_H*0.5;
+  const magnetLv=upgrades.magnet||0;
+  // Soft centripetal suction toward portal mouth
+  let pullBase=0.016+magnetLv*0.042;
+  if(suctionBoost>0){
+    const boostT=Math.min(1, suctionBoost/22);
+    // ease-out amplify (Void suck curve lite)
+    pullBase*=1.55+1.35*boostT*boostT;
+  }
+  const pullRange=120+magnetLv*36;
+  let fpWrite=0;
+  for(let fi=0;fi<fallParticles.length;fi++){
+    const fp=fallParticles[fi];
+    if(fp.z==null) fp.z=0.6;
+    if(fp.vz==null) fp.vz=-0.008;
+    const dx=padCx-fp.x, dy=padCy-fp.y;
+    const dist=Math.hypot(dx,dy)||1;
+    if(dist<pullRange){
+      const t=1-dist/pullRange;
+      const ease=t*t*(3-2*t); // smoothstep
+      const force=pullBase*ease*dt;
+      fp.vx+=(dx/dist)*force;
+      fp.vy+=(dy/dist)*force*0.9;
+      // Portal suction also pulls height down onto the catch plane
+      fp.z -= 0.055 * ease * dt;
+    }
+    fp.vy+=gravMult*dt; fp.x+=fp.vx*dt; fp.y+=fp.vy*dt;
+    // Stay high near the boss; only drop toward the floor in the lower half
+    const ny = fp.y / Math.max(1, PAD_Y);
+    const floorTarget = ny < 0.45
+      ? 0.88 + (1 - ny / 0.45) * 0.12
+      : Math.max(0.06, 1.0 - Math.pow((ny - 0.45) / 0.55, 1.15) * 0.94);
+    fp.vz += (floorTarget - fp.z) * 0.022 * dt;
+    fp.z += fp.vz * dt;
+    if(fp.z<0) fp.z=0;
+    if(fp.z>1) fp.z=1;
+    fp.phase=(fp.phase||0)+0.28*dt;
+    if(fp.x<0) fp.x+=W; if(fp.x>=W) fp.x-=W;
+    // Catch when near the floor layer; otherwise cling to the portal and settle
+    if(padHit(fp.x,fp.y)){
+      if(fp.z <= CATCH_Z){
+        const spd=currentBallSpeed();
+        const a=(Math.random()-0.5)*Math.PI*0.7-Math.PI/2;
+        const launchZ = Math.min(0.35, Math.max(0.1, fp.z * 0.6 + 0.08));
+        spawnBall(fp.x,PAD_Y-2,Math.cos(a)*spd,Math.sin(a)*spd,[fp.r,fp.g,fp.b], launchZ);
+        if(upgrades.doubleTap>0&&Math.random()<upgrades.doubleTap*0.18){
+          const a2=(Math.random()-0.5)*Math.PI*0.7-Math.PI/2;
+          spawnBall(fp.x,PAD_Y-2,Math.cos(a2)*spd,Math.sin(a2)*spd,[fp.r,fp.g,fp.b], launchZ);
+        }
+        spawnCatchRing(fp.x, PAD_Y+PAD_H*0.5);
+        soundSpawn(fp.r,fp.g,fp.b);
+        noteProgress(1);
+        fireBoost = Math.max(fireBoost, 50);
+        continue;
+      }
+      fp.z -= 0.09 * dt;
+      fp.vy *= 0.82;
+      fp.y = Math.min(fp.y, PAD_Y + PAD_H * 0.35);
+    }
+    if(fp.y>H){
+      // Missed bomb / star — lose a life (Invaders-style)
+      loseLife();
+      continue;
+    }
+    fallParticles[fpWrite++]=fp;
+  }
+  fallParticles.length=fpWrite;
+
+  // Age catch rings
+  let ringWrite=0;
+  for(let i=0;i<catchRings.length;i++){
+    const ring=catchRings[i];
+    ring.age++;
+    if(ring.age<ring.maxAge) catchRings[ringWrite++]=ring;
+  }
+  catchRings.length=ringWrite;
 
   updateUI(); flushBlockSound();
-  if(blockCount===0) stageClear();
-  else if(balls.length===0&&fallParticles.length===0) gameOver();
 }
 
-function spawnFallParticle(x,y,angle,color){
-  if(fallParticles.length>=MAX_PARTICLES) return;
-  fallParticles.push({ x,y, vx:Math.cos(angle+Math.PI+(Math.random()-0.5)*0.8)*(2+Math.random()*2), vy:1, r:color.r,g:color.g,b:color.b });
+function spawnCatchRing(x,y){
+  if(catchRings.length>24) catchRings.shift();
+  catchRings.push({x,y,age:0,maxAge:16,r:5+Math.random()*3});
 }
+
 function triggerChainBlast(cx,cy){
-  const hits=destroyArea(cx,cy,12);
-  let xpSum=0;
-  for(const h of hits){ score+=Math.round(scoreMultiplier*comboMultiplier); xpSum+=h.xp; spawnFallParticle(h.x,h.y,Math.random()*Math.PI*2,h); }
-  if(xpSum>0) gainXP(xpSum);
+  if(boss && boss.hp>0){
+    const dmg=10;
+    boss.hp=Math.max(0, boss.hp-dmg);
+    boss.flash=12;
+    noteProgress(dmg);
+    score+=Math.round(scoreMultiplier*comboMultiplier*dmg);
+    gainXP(dmg);
+  }
+  const [ar,ag,ab]=visitPalette.accent;
+  const ox=boss?boss.x:cx, oy=boss?boss.y:cy;
+  for(let i=0;i<10;i++){
+    spawnStarDrop(ox+(Math.random()-0.5)*50, oy+(Math.random()-0.5)*20, {r:ar,g:ag,b:ab});
+  }
   soundChain();
+  if(boss && boss.hp<=0) onBossDefeated();
 }
 
 // ═══════════════════════════════════════════════════════
 //  PROJECTION (3D)
 // ═══════════════════════════════════════════════════════
-function proj(x,y){
+function proj(x,y,tilt){
+  const a = tilt == null ? effectivePerspective() : tilt;
+  const far = farForTilt(a);
+  const top = topForTilt(a);
   const t=y/SRC_H;
-  const z=FAR+(1-FAR)*t;
+  const z=far+(1-far)*t;
   const scale=1/z;
-  const rp=(1-1/z)/(1-1/FAR);
-  const sy=SCREEN_BOTTOM-rp*(SCREEN_BOTTOM-SCREEN_TOP);
-  const cx=W/2+Math.sin(camSway)*6;
+  const rp=(1-1/z)/(1-1/far);
+  const sy=SCREEN_BOTTOM-rp*(SCREEN_BOTTOM-top);
+  const cx=W/2+Math.sin(camSway)*6*a;
   const sx=cx+(x-W/2)*scale;
   return {sx,sy,scale};
 }
@@ -581,16 +1132,22 @@ function proj(x,y){
 const stars=[];
 for(let i=0;i<160;i++) stars.push({x:Math.random()*2-1,y:Math.random()*2-1,z:Math.random()});
 function drawStars(){
-  const cx=W/2+Math.sin(camSway)*6, cy=SCREEN_TOP-10;
-  for(const s of stars){
+  const tilt=effectivePerspective();
+  const top=topForTilt(tilt);
+  const cx=W/2+Math.sin(camSway)*6*tilt, cy=Math.max(4, top*0.45);
+  const load=balls.length+fallParticles.length;
+  const n=load>400?80:stars.length;
+  for(let i=0;i<n;i++){
+    const s=stars[i];
     s.z-=0.003; if(s.z<=0.02){ s.z=1; s.x=Math.random()*2-1; s.y=Math.random()*2-1; }
     const k=0.6/s.z;
     const sx=cx+s.x*W*0.5*k;
-    const sy=cy+s.y*H*0.45*k;
-    if(sx<0||sx>=W||sy<0||sy>=H) continue;
+    const sy=cy+s.y*Math.max(28, top+20)*k;
+    if(sx<0||sx>=W||sy<0||sy>=Math.max(top+8, 40)) continue;
     const b=Math.min(1,(1-s.z)*1.2);
     const sz=Math.max(0.5,(1-s.z)*2.2);
-    ctx.fillStyle=`rgba(${120+b*135},${200+b*55|0},255,${b*0.8})`;
+    const [cr,cg,cb]=visitPalette.core;
+    ctx.fillStyle=`rgba(${Math.round(cr*0.45+b*cr*0.55)},${Math.round(cg*0.5+b*cg*0.5)},${Math.round(cb*0.55+b*(255-cb*0.2))},${b*0.8})`;
     ctx.fillRect(sx,sy,sz,sz);
   }
 }
@@ -598,18 +1155,22 @@ function drawStars(){
 // ═══════════════════════════════════════════════════════
 //  FLOOR GRID (3D)
 // ═══════════════════════════════════════════════════════
-function drawFloorGrid(){
+function drawFloorGrid(tilt){
+  const a = tilt == null ? effectivePerspective() : tilt;
+  if(a < 0.04) return;
   ctx.save();
-  ctx.strokeStyle='rgba(0,255,200,0.10)'; ctx.lineWidth=1;
-  // vertical lines (converging)
+  const [ar,ag,ab]=visitPalette.accent;
+  ctx.globalAlpha = Math.min(1, a * 1.1);
+  ctx.strokeStyle=`rgba(${ar},${ag},${ab},${0.06 + 0.08 * a})`; ctx.lineWidth=1;
+  // vertical lines (converging as the plane tips)
   for(let gx=0;gx<=W;gx+=40){
-    const a=proj(gx,SRC_H-1), b=proj(gx,0);
-    ctx.beginPath(); ctx.moveTo(a.sx,a.sy); ctx.lineTo(b.sx,b.sy); ctx.stroke();
+    const p0=proj(gx,SRC_H-1,a), p1=proj(gx,0,a);
+    ctx.beginPath(); ctx.moveTo(p0.sx,p0.sy); ctx.lineTo(p1.sx,p1.sy); ctx.stroke();
   }
   // horizontal lines (depth rings)
   for(let gy=0;gy<=SRC_H;gy+=40){
-    const a=proj(0,gy), b=proj(W,gy);
-    ctx.beginPath(); ctx.moveTo(a.sx,a.sy); ctx.lineTo(b.sx,b.sy); ctx.stroke();
+    const p0=proj(0,gy,a), p1=proj(W,gy,a);
+    ctx.beginPath(); ctx.moveTo(p0.sx,p0.sy); ctx.lineTo(p1.sx,p1.sy); ctx.stroke();
   }
   ctx.restore();
 }
@@ -622,69 +1183,73 @@ function renderFieldToOffscreen(){
   if(!fieldImg) fieldImg=offCtx.createImageData(W,H);
   const data=fieldImg.data;
   // transparent fill (alpha 0 so warp shows stars behind in 3D)
-  for(let i=0;i<data.length;i+=4){ data[i]=0; data[i+1]=0; data[i+2]=0; data[i+3]=0; }
+  data.fill(0);
 
-  // Animated energy sweep position (rolls down the wall)
-  const sweepY = (energyPhase % 1) * (curStageRows + 8) - 4;
+  // Soft floor shadows (warped with the plane) — bodies drawn in screen space
+  stampFloorShadows(data);
+  drawBossToData(data);
 
-  for(let y=0;y<curStageRows;y++){
-    const sd = Math.abs(y - sweepY);
-    const sweep = sd < 5 ? (1 - sd/5) * 0.7 : 0;   // bright energy band
-    for(let x=0;x<W;x++){
-      const b=blocks[x+y*W];
-      if(!b) continue;
-      const idx=(y*W+x)*4;
-      // circuit-noise micro-texture for a detailed, fabricated look
-      const noise = ((x*131 + y*57) & 7) / 7;
-      const bright = 0.80 + noise*0.20 + sweep;
-      let r=b.r*bright, g=b.g*bright, bl=b.b*bright;
-      if(b.armored){
-        // metallic cyan-white tech panel; intensity tracks remaining HP
-        const k=b.hp/b.maxHp;
-        r  = r*0.45 + 120*k;
-        g  = g*0.45 + 205*k;
-        bl = bl*0.45 + 235*k;
-      }
-      data[idx]   = r>255?255:r;
-      data[idx+1] = g>255?255:g;
-      data[idx+2] = bl>255?255:bl;
-      data[idx+3] = 255;
-    }
-  }
-
-  // Falling particles — glowing embers (brightened so bloom catches them)
-  for(const fp of fallParticles){
-    const px=Math.round(fp.x),py=Math.round(fp.y);
-    if(px>=0&&px<W&&py>=0&&py<H){ const idx=(py*W+px)*4;
-      data[idx]=Math.min(255,fp.r*1.25+30); data[idx+1]=Math.min(255,fp.g*1.25+30); data[idx+2]=Math.min(255,fp.b*1.25+30); data[idx+3]=255; }
-  }
-
-  // Balls — bright luminous orbs with a hot white core
-  for(const ball of balls){
-    const bx=Math.round(ball.x),by=Math.round(ball.y);
-    for(let dy=-3;dy<=3;dy++)for(let dx=-3;dx<=3;dx++){
-      const d2=dx*dx+dy*dy;
-      if(d2<=9){ const px=bx+dx,py=by+dy;
-        if(px>=0&&px<W&&py>=0&&py<H){ const idx=(py*W+px)*4;
-          const core = d2<=2 ? 255 : 200;
-          data[idx]=Math.max(data[idx],Math.min(255,ball.color[0]*0.5+core));
-          data[idx+1]=Math.max(data[idx+1],Math.min(255,ball.color[1]*0.5+core));
-          data[idx+2]=Math.max(data[idx+2],Math.min(255,ball.color[2]*0.5+core));
-          data[idx+3]=255; } }
-    }
-  }
   offCtx.putImageData(fieldImg,0,0);
 }
 
+function stampFloorShadows(data){
+  const fpCount=fallParticles.length;
+  const fpStart=Math.max(0, fpCount-MAX_DRAW_PARTICLES);
+  for(let i=fpStart;i<fpCount;i++){
+    const fp=fallParticles[i];
+    const z=fp.z||0;
+    if(z < 0.08) continue;
+    const px=Math.round(fp.x), py=Math.round(fp.y);
+    const rad=1+Math.min(3, Math.floor(z*3));
+    const a=Math.floor(40+z*70);
+    for(let dy=-rad;dy<=rad;dy++)for(let dx=-rad;dx<=rad;dx++){
+      if(dx*dx+dy*dy>rad*rad) continue;
+      const x=px+dx, y=py+dy;
+      if(x<0||x>=W||y<0||y>=H) continue;
+      const idx=(y*W+x)*4;
+      data[idx]=Math.min(255, data[idx]+a*0.15);
+      data[idx+1]=Math.min(255, data[idx+1]+a*0.1);
+      data[idx+2]=Math.min(255, data[idx+2]+a*0.2);
+      data[idx+3]=Math.max(data[idx+3], a);
+    }
+  }
+  const ballN=balls.length;
+  const ballStart=Math.max(0, ballN-MAX_DRAW_BALLS);
+  for(let i=ballStart;i<ballN;i++){
+    const ball=balls[i];
+    const z=ball.z||0;
+    if(z < 0.06) continue;
+    const px=Math.round(ball.x), py=Math.round(ball.y);
+    const rad=1+Math.min(2, Math.floor(z*2.5));
+    const a=Math.floor(35+z*55);
+    for(let dy=-rad;dy<=rad;dy++)for(let dx=-rad;dx<=rad;dx++){
+      if(dx*dx+dy*dy>rad*rad) continue;
+      const x=px+dx, y=py+dy;
+      if(x<0||x>=W||y<0||y>=H) continue;
+      const idx=(y*W+x)*4;
+      data[idx]=Math.min(255, data[idx]+a*0.12);
+      data[idx+1]=Math.min(255, data[idx+1]+a*0.08);
+      data[idx+2]=Math.min(255, data[idx+2]+a*0.18);
+      data[idx+3]=Math.max(data[idx+3], a);
+    }
+  }
+}
+
 // Neon bloom post-process: blur a downscaled copy and add it back
+let bloomFrame=0;
 function applyBloom(intensity){
+  const load=balls.length+fallParticles.length;
+  // Skip under heavy load or every other frame when moderately busy
+  if(load>380 || balls.length>90) return;
+  bloomFrame++;
+  if((load>220||balls.length>50)&&(bloomFrame&1)) return;
   glowCtx.clearRect(0,0,GLOW_W,GLOW_H);
-  glowCtx.filter='blur(3px)';
+  glowCtx.filter='blur(2px)';
   glowCtx.drawImage(canvas,0,0,GLOW_W,GLOW_H);
   glowCtx.filter='none';
   ctx.save();
   ctx.globalCompositeOperation='lighter';
-  ctx.globalAlpha=intensity;
+  ctx.globalAlpha=intensity*(load>280?0.7:1);
   ctx.imageSmoothingEnabled=true;
   ctx.drawImage(glow,0,0,W,H);
   ctx.restore();
@@ -693,19 +1258,181 @@ function applyBloom(intensity){
 // ═══════════════════════════════════════════════════════
 //  WARP OFFSCREEN → SCREEN (mode-7 perspective)
 // ═══════════════════════════════════════════════════════
-function warpField(){
-  const cxBase=W/2+Math.sin(camSway)*6;
-  for(let sy=SCREEN_TOP; sy<SCREEN_BOTTOM; sy++){
-    const rp=(SCREEN_BOTTOM-sy)/(SCREEN_BOTTOM-SCREEN_TOP); // 0 bottom..1 top
-    const invZ=1-rp*(1-1/FAR);
+/**
+ * Mode-7 tilt: amount 0 = flat table, 1 = full tip into the void.
+ * FAR and horizon grow with amount so the plane visibly leans back.
+ */
+function warpField(amount){
+  const a=Math.max(0, Math.min(1, amount));
+  if(a < 0.012){
+    ctx.drawImage(off, 0, 0);
+    return;
+  }
+  const far = farForTilt(a);
+  const top = topForTilt(a);
+  // Sky wedge above the tipped far edge
+  if(top > 0){
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, a * 1.15);
+    const [fr,fg,fb]=visitPalette.fog;
+    ctx.fillStyle=`rgb(${fr},${fg},${fb})`;
+    ctx.fillRect(0, 0, W, top);
+    ctx.restore();
+  }
+  const cxBase=W/2+Math.sin(camSway)*6*a;
+  const load=balls.length+fallParticles.length;
+  const step=load>400?3:2;
+  for(let sy=top; sy<SCREEN_BOTTOM; sy+=step){
+    const band=SCREEN_BOTTOM-top;
+    const rp=band>0 ? (SCREEN_BOTTOM-sy)/band : 0; // 0 near (paddle) .. 1 far (horizon)
+    const invZ=1-rp*(1-1/far);
     const z=1/invZ;
     const scale=1/z;
-    const t=(z-FAR)/(1-FAR);
+    const t=(z-far)/(1-far);
     let srcY=Math.floor(t*SRC_H);
     if(srcY<0) srcY=0; if(srcY>=SRC_H) srcY=SRC_H-1;
     const sw=W*scale, sx=cxBase-sw/2;
-    ctx.drawImage(off, 0,srcY, W,1, sx, sy, sw, 1.4);
+    ctx.drawImage(off, 0,srcY, W,1, sx, sy, sw, step+0.45);
   }
+  if(SCREEN_BOTTOM < H){
+    ctx.drawImage(off, 0, SCREEN_BOTTOM, W, H-SCREEN_BOTTOM, 0, SCREEN_BOTTOM, W, H-SCREEN_BOTTOM);
+  }
+}
+
+/**
+ * Map floor (x,y) + height z → screen. Shadow sits on the plane; body lifts up.
+ */
+function heightScreen(x, y, z, tilt){
+  const zz = z || 0;
+  let fx, fy, baseScale;
+  if(tilt > 0.01 && y < SRC_H){
+    const p = proj(x, Math.max(0, Math.min(SRC_H - 1, y)), tilt);
+    fx = p.sx;
+    fy = p.sy;
+    baseScale = Math.max(0.4, p.scale);
+  } else {
+    fx = x;
+    fy = y;
+    baseScale = 1;
+  }
+  const lift = zz * Z_LIFT * (0.85 + 0.25 * baseScale);
+  return {
+    fx, fy,
+    sx: fx,
+    sy: fy - lift,
+    scale: baseScale * (0.85 + zz * 1.55),
+    z: zz,
+  };
+}
+
+/** Obvious floor contact + floating body (readable height). */
+function drawHeightLayer(){
+  const persp = effectivePerspective();
+  const t = performance.now() * 0.008;
+  const items = [];
+
+  const fpCount = fallParticles.length;
+  const fpStart = Math.max(0, fpCount - MAX_DRAW_PARTICLES);
+  for(let i = fpStart; i < fpCount; i++){
+    const fp = fallParticles[i];
+    items.push({ kind: 'star', ref: fp, y: fp.y, z: fp.z || 0 });
+  }
+  const ballN = balls.length;
+  const ballStart = Math.max(0, ballN - MAX_DRAW_BALLS);
+  for(let i = ballStart; i < ballN; i++){
+    const b = balls[i];
+    items.push({ kind: 'ball', ref: b, y: b.y, z: b.z || 0 });
+  }
+  items.sort((a, b) => (a.y - b.y) || (a.z - b.z));
+
+  const [ar, ag, ab] = visitPalette.accent;
+  const [cr, cg, cb] = visitPalette.core;
+  ctx.save();
+  for(let i = 0; i < items.length; i++){
+    const it = items[i];
+    const ref = it.ref;
+    const zz = ref.z || 0;
+    const h = heightScreen(ref.x, ref.y, zz, persp);
+    if(h.fx < -20 || h.fx > W + 20 || h.fy < -20 || h.fy > H + 20) continue;
+
+    // 1) Floor pad — bright ring so the ground contact is unmistakable
+    if(zz > 0.12){
+      ctx.globalCompositeOperation = 'source-over';
+      const rw = 4 + zz * 10;
+      const rh = 2 + zz * 4;
+      ctx.globalAlpha = Math.min(0.55, 0.18 + zz * 0.4);
+      ctx.fillStyle = '#000';
+      ctx.beginPath();
+      ctx.ellipse(h.fx, h.fy, rw, rh, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = Math.min(0.9, 0.35 + zz * 0.55);
+      ctx.strokeStyle = `rgb(${ar},${ag},${ab})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.ellipse(h.fx, h.fy, rw, rh, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      // crosshair on floor
+      ctx.globalAlpha = 0.55;
+      ctx.beginPath();
+      ctx.moveTo(h.fx - rw * 0.7, h.fy);
+      ctx.lineTo(h.fx + rw * 0.7, h.fy);
+      ctx.moveTo(h.fx, h.fy - rh * 0.7);
+      ctx.lineTo(h.fx, h.fy + rh * 0.7);
+      ctx.stroke();
+    }
+
+    // 2) Vertical prop from floor → body
+    if(zz > 0.15){
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = Math.min(0.75, 0.25 + zz * 0.45);
+      ctx.strokeStyle = `rgba(${ar},${ag},${ab},0.95)`;
+      ctx.lineWidth = 1.25;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(h.fx, h.fy);
+      ctx.lineTo(h.sx, h.sy);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    if(it.kind === 'star'){
+      const fp = ref;
+      const phase = fp.phase || 0;
+      const twinkle = 0.65 + 0.35 * Math.sin(t + phase);
+      const flash = Math.sin(t * 2.2 + phase * 1.8) > 0.88;
+      const body = Math.max(3.2, 2.1 * h.scale * (0.85 + twinkle * 0.3));
+      const arm = body * (flash ? 2.1 : 1.55);
+      const a = Math.min(0.95, 0.45 + twinkle * 0.3 + zz * 0.25);
+
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = a;
+      ctx.fillStyle = `rgb(${Math.min(255, Math.round(fp.r * 0.55 + cr * 0.45 + 60))},${Math.min(255, Math.round(fp.g * 0.55 + cg * 0.45 + 60))},${Math.min(255, Math.round(fp.b * 0.55 + cb * 0.45 + 80))})`;
+      ctx.beginPath();
+      ctx.arc(h.sx, h.sy, body * 0.85, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.globalAlpha = a;
+      ctx.fillStyle = flash ? '#ffffff' : `rgb(${Math.min(255, cr + 40)},${Math.min(255, cg + 20)},255)`;
+      ctx.fillRect(h.sx - arm, h.sy - 1, arm * 2, 2);
+      ctx.fillRect(h.sx - 1, h.sy - arm, 2, arm * 2);
+    } else {
+      const ball = ref;
+      const rad = Math.max(3.2, 3.4 * h.scale);
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = 1;
+      const c0 = ball.color[0], c1 = ball.color[1], c2 = ball.color[2];
+      ctx.fillStyle = `rgb(${Math.min(255, c0 * 0.4 + 180)},${Math.min(255, c1 * 0.4 + 180)},${Math.min(255, c2 * 0.4 + 190)})`;
+      ctx.beginPath();
+      ctx.arc(h.sx, h.sy, rad, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      ctx.arc(h.sx - rad * 0.28, h.sy - rad * 0.28, rad * 0.38, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -714,60 +1441,205 @@ function warpField(){
 function draw(){
   renderFieldToOffscreen();
   ctx.clearRect(0,0,W,H);
-  // space background
-  ctx.fillStyle='#06060c'; ctx.fillRect(0,0,W,H);
+  // visit fog background
+  const [fr,fg,fb]=visitPalette.fog;
+  ctx.fillStyle=`rgb(${fr},${fg},${fb})`; ctx.fillRect(0,0,W,H);
 
-  if(renderMode==='3d'){
-    drawStars();
-    drawFloorGrid();
-    warpField();
-    // depth fog: darken far (top) region
-    const fog=ctx.createLinearGradient(0,SCREEN_TOP,0,SCREEN_BOTTOM);
-    fog.addColorStop(0,'rgba(6,6,20,0.55)');
-    fog.addColorStop(0.5,'rgba(6,6,20,0.0)');
-    ctx.fillStyle=fog; ctx.fillRect(0,SCREEN_TOP-12,W,SCREEN_BOTTOM-SCREEN_TOP+12);
-    applyBloom(0.55);
-  } else {
+  const persp=effectivePerspective();
+
+  if(persp < 0.012){
     ctx.drawImage(off,0,0);
-    ctx.save(); ctx.strokeStyle='rgba(0,255,200,0.025)'; ctx.lineWidth=1;
+    const [ar,ag,ab]=visitPalette.accent;
+    ctx.save(); ctx.strokeStyle=`rgba(${ar},${ag},${ab},0.025)`; ctx.lineWidth=1;
     for(let x=0;x<W;x+=40){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
     for(let y=0;y<H;y+=40){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
     ctx.restore();
     applyBloom(0.5);
+  } else {
+    // Flat grid fades as the plane tips
+    if(persp < 0.55){
+      const [ar,ag,ab]=visitPalette.accent;
+      ctx.save();
+      ctx.globalAlpha=(1-persp/0.55)*0.85;
+      ctx.strokeStyle=`rgba(${ar},${ag},${ab},0.025)`; ctx.lineWidth=1;
+      for(let x=0;x<W;x+=40){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+      for(let y=0;y<H;y+=40){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+      ctx.restore();
+    }
+    // Stars only once there's a real sky wedge
+    if(persp > 0.18){
+      ctx.save();
+      ctx.globalAlpha=Math.min(1, (persp-0.18)/0.45);
+      drawStars();
+      ctx.restore();
+    }
+    if(balls.length+fallParticles.length<280) drawFloorGrid(persp);
+    warpField(persp);
+    const top=topForTilt(persp);
+    const fog=ctx.createLinearGradient(0,top,0,SCREEN_BOTTOM);
+    fog.addColorStop(0,`rgba(${fr},${fg},${Math.min(255,fb+8)},${0.5*persp})`);
+    fog.addColorStop(0.55,`rgba(${fr},${fg},${fb},0.0)`);
+    ctx.fillStyle=fog; ctx.fillRect(0,Math.max(0,top-8),W,SCREEN_BOTTOM-top+12);
+    applyBloom(0.48+0.08*persp);
   }
 
-  // Paddle (screen space, near plane — identical both modes)
-  ctx.save();
-  ctx.shadowColor='#00ffcc'; ctx.shadowBlur=14;
-  const grad=ctx.createLinearGradient(padX,PAD_Y,padX,PAD_Y+PAD_H);
-  grad.addColorStop(0,'#00ffcc'); grad.addColorStop(1,'#009977');
-  ctx.fillStyle=grad; ctx.beginPath(); ctx.roundRect(padX,PAD_Y,PAD_W,PAD_H,4); ctx.fill();
-  ctx.strokeStyle='#00ffcc'; ctx.lineWidth=1; ctx.stroke();
-  ctx.restore();
-
-  if(upgrades.magnet>0){
-    const mr=upgrades.magnet*20;
-    ctx.save(); ctx.strokeStyle='rgba(0,255,200,0.12)'; ctx.lineWidth=1; ctx.setLineDash([2,4]);
-    ctx.strokeRect(padX-mr,PAD_Y-mr,PAD_W+mr*2,PAD_H+mr*2); ctx.restore();
-  }
+  drawHeightLayer();
+  drawPlayerShots();
+  drawPlayerShip();
+  drawCatchRings();
+  drawClearRitual();
+  drawBossHpBar();
 
   if(gameState==='playing'&&balls.length===0&&fallParticles.length>0){
     ctx.save(); ctx.globalAlpha=0.5+0.5*Math.sin(Date.now()/200);
     ctx.fillStyle='#ffcc00'; ctx.font='6px "Press Start 2P"'; ctx.textAlign='center';
-    ctx.fillText('CATCH THE PARTICLES!',W/2,H-8); ctx.restore();
+    ctx.fillText('CATCH STARS!',W/2,H-8); ctx.restore();
   }
+}
+
+/** Classic Invaders-style cannon (自機). Hitbox stays PAD_* for catch / bounce. */
+const PLAYER_SHIP = [
+  [0,0,0,0,1,0,0,0,0],
+  [0,0,0,1,1,1,0,0,0],
+  [0,0,1,1,1,1,1,0,0],
+  [0,1,1,1,1,1,1,1,0],
+  [1,1,1,1,1,1,1,1,1],
+  [1,0,1,1,1,1,1,0,1],
+];
+
+function drawPlayerShip(){
+  const [ar,ag,ab]=visitPalette.accent;
+  const [cr,cg,cb]=visitPalette.core;
+  const cols = PLAYER_SHIP[0].length;
+  const rows = PLAYER_SHIP.length;
+  const cellW = PAD_W / cols;
+  const cellH = PAD_H / rows;
+  const ox = padX;
+  const oy = PAD_Y;
+  // Blink while invulnerable after a hit
+  if(hurtCd>0 && ((hurtCd/4)|0)%2===0) return;
+
+  ctx.save();
+  if(upgrades.magnet>0){
+    const mr=upgrades.magnet*20;
+    ctx.strokeStyle=`rgba(${ar},${ag},${ab},0.18)`;
+    ctx.lineWidth=1;
+    ctx.setLineDash([2,4]);
+    ctx.strokeRect(padX-mr,PAD_Y-mr,PAD_W+mr*2,PAD_H+mr*2);
+    ctx.setLineDash([]);
+  }
+
+  // Soft glow under ship
+  ctx.shadowColor= hurtCd>0 ? '#ff3366' : `rgb(${ar},${ag},${ab})`;
+  ctx.shadowBlur=12;
+
+  for(let row=0; row<rows; row++){
+    for(let col=0; col<cols; col++){
+      if(!PLAYER_SHIP[row][col]) continue;
+      const x = ox + col * cellW;
+      const y = oy + row * cellH;
+      const tip = row === 0;
+      const wing = row >= 4 && (col === 0 || col === cols - 1);
+      if(tip){
+        ctx.fillStyle=`rgb(${Math.min(255,cr+40)},${Math.min(255,cg+20)},${Math.min(255,cb+10)})`;
+      } else if(wing){
+        ctx.fillStyle=`rgb(${ar},${ag},${ab})`;
+      } else {
+        ctx.fillStyle=`rgb(${Math.round(ar*0.55+cr*0.45)},${Math.round(ag*0.55+cg*0.45)},${Math.round(ab*0.55+cb*0.45)})`;
+      }
+      ctx.fillRect(x, y, Math.ceil(cellW)+0.5, Math.ceil(cellH)+0.5);
+    }
+  }
+
+  // Cockpit highlight
+  ctx.shadowBlur=0;
+  ctx.fillStyle='rgba(255,255,255,0.85)';
+  ctx.fillRect(ox + cellW * 3.6, oy + cellH * 2.2, cellW * 1.8, cellH * 1.2);
+
+  // Engine flicker
+  const flicker = 0.45 + 0.55 * Math.sin(performance.now() * 0.02);
+  ctx.globalAlpha = flicker;
+  ctx.fillStyle=`rgb(${ar},${ag},${ab})`;
+  ctx.fillRect(ox + cellW * 2.5, oy + PAD_H - 1, cellW * 4, 2);
+  ctx.restore();
+}
+
+function drawCatchRings(){
+  if(!catchRings.length) return;
+  const [ar,ag,ab]=visitPalette.accent;
+  ctx.save();
+  ctx.globalCompositeOperation='lighter';
+  for(const ring of catchRings){
+    const t=ring.age/ring.maxAge;
+    ctx.globalAlpha=(1-t)*0.9;
+    ctx.strokeStyle=`rgb(${ar},${ag},${ab})`;
+    ctx.lineWidth=Math.max(0.6,1.6*(1-t));
+    ctx.beginPath();
+    ctx.arc(ring.x,ring.y,ring.r+t*20,0,Math.PI*2);
+    ctx.stroke();
+    // secondary inner pulse
+    ctx.globalAlpha=(1-t)*0.45;
+    ctx.beginPath();
+    ctx.arc(ring.x,ring.y,ring.r*0.45+t*8,0,Math.PI*2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/** Pshoon clear — white flash + vignette while still playing. */
+function drawClearRitual(){
+  if(clearRitualT<=0) return;
+  const u=clearRitualT/clearRitualMax;
+  const [ar,ag,ab]=visitPalette.accent;
+  const [fr,fg,fb]=visitPalette.fog;
+  // white / accent flash (peaks at start of ritual)
+  const flashA=Math.pow(u,0.55)*0.58;
+  ctx.save();
+  ctx.fillStyle=`rgba(255,255,255,${flashA})`;
+  ctx.fillRect(0,0,W,H);
+  ctx.globalCompositeOperation='lighter';
+  ctx.fillStyle=`rgba(${ar},${ag},${ab},${flashA*0.35})`;
+  ctx.fillRect(0,0,W,H);
+  ctx.globalCompositeOperation='source-over';
+  // vignette iris
+  const g=ctx.createRadialGradient(W/2,H*0.45,W*0.08,W/2,H*0.5,W*0.78);
+  g.addColorStop(0,'rgba(0,0,0,0)');
+  g.addColorStop(0.55,`rgba(${fr},${fg},${fb},${0.15*u})`);
+  g.addColorStop(1,`rgba(0,0,0,${0.72*u})`);
+  ctx.fillStyle=g;
+  ctx.fillRect(0,0,W,H);
+  ctx.restore();
 }
 
 // ═══════════════════════════════════════════════════════
 //  UI
 // ═══════════════════════════════════════════════════════
+const uiCache={ score:-1, threat:'', wave:-1, level:-1, balls:-1 };
 function updateUI(){
-  document.getElementById('scoreDisplay').textContent=score;
-  document.getElementById('stageDisplay').textContent=stage;
-  document.getElementById('levelDisplay').textContent=playerLevel;
-  document.getElementById('multiDisplay').textContent=`x${scoreMultiplier.toFixed(1)}`;
-  document.getElementById('ballCount').textContent=balls?balls.length:0;
-  updateUpgradeBadges();
+  if(uiCache.score!==score){
+    uiCache.score=score;
+    document.getElementById('scoreDisplay').textContent=score;
+  }
+  const threat=threatLabel();
+  if(uiCache.threat!==threat){
+    uiCache.threat=threat;
+    document.getElementById('threatDisplay').textContent=threat;
+  }
+  if(uiCache.wave!==wave){
+    uiCache.wave=wave;
+    document.getElementById('waveDisplay').textContent=wave;
+  }
+  if(uiCache.level!==playerLevel){
+    uiCache.level=playerLevel;
+    document.getElementById('levelDisplay').textContent=playerLevel;
+  }
+  const bc=playerLives;
+  if(uiCache.balls!==bc){
+    uiCache.balls=bc;
+    const el=document.getElementById('livesDisplay');
+    if(el) el.textContent=bc;
+  }
+  if(modeAuto) syncModeBtn();
 }
 function updateXPBar(){
   const pct=Math.min(100,(xp/xpNeeded)*100);
@@ -775,8 +1647,18 @@ function updateXPBar(){
   document.getElementById('xpText').textContent=`LV ${playerLevel}  —  ${Math.floor(xp)} / ${xpNeeded} XP`;
 }
 function updateUpgradeBadges(){
-  const c=document.getElementById('upgradeIcons'); c.innerHTML='';
-  for(const [id,lv] of Object.entries(upgradeLevels)){ if(!lv) continue; const d=UPGRADE_DEFS[id]; const b=document.createElement('div'); b.className='upg-badge'; b.textContent=`${d.icon}${lv>1?lv:''}`; c.appendChild(b); }
+  const c=document.getElementById('upgradeIcons');
+  if(!c) return;
+  c.innerHTML='';
+  for(const [id,lv] of Object.entries(upgradeLevels)){
+    if(!lv) continue;
+    const d=UPGRADE_DEFS[id];
+    if(!d) continue;
+    const b=document.createElement('div');
+    b.className='upg-badge';
+    b.textContent=`${d.icon}${lv>1?lv:''}`;
+    c.appendChild(b);
+  }
 }
 function updateComboDisplay(){
   const el=document.getElementById('comboDisplay');
@@ -784,6 +1666,8 @@ function updateComboDisplay(){
 }
 function showBanner(text){
   const el=document.getElementById('stageBanner'); el.textContent=text;
+  el.style.color=accentCss();
+  el.style.textShadow=`0 0 15px ${accentCss()}`;
   el.style.transition='none'; el.style.opacity='1';
   setTimeout(()=>{ el.style.transition='opacity 1.2s'; el.style.opacity='0'; },1100);
 }
@@ -799,55 +1683,101 @@ function showOverlay(title,color,desc,sub,scoreText){
 function hideOverlay(){ document.getElementById('overlay').classList.add('hidden'); }
 
 // ═══════════════════════════════════════════════════════
-//  UPGRADE SCREEN
+//  MODE TOGGLE — [V] cycles AUTO (tilt) → 2D lock → 3D lock → AUTO
 // ═══════════════════════════════════════════════════════
-function getUpgradePool(){
-  const avail=[];
-  for(const [id,def] of Object.entries(UPGRADE_DEFS)){ const lv=upgradeLevels[id]||0; if(lv<def.max) avail.push(id); }
-  for(let i=avail.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [avail[i],avail[j]]=[avail[j],avail[i]]; }
-  return avail.slice(0,3);
-}
-function showUpgradeScreen(){
-  gameState='upgrade';
-  document.getElementById('upgradeSubtitle').textContent=`REACHED LEVEL ${playerLevel}  —  CHOOSE AN UPGRADE`;
-  const pool=getUpgradePool();
-  const c=document.getElementById('upgradeCards'); c.innerHTML='';
-  for(const id of pool){
-    const def=UPGRADE_DEFS[id]; const lv=upgradeLevels[id]||0;
-    const card=document.createElement('div'); card.className=`upgrade-card card-rarity-${def.rarity}`;
-    const ic=document.createElement('div'); ic.className='card-icon'; ic.textContent=def.icon;
-    const nm=document.createElement('div'); nm.className='card-name'; nm.textContent=def.name;
-    const ds=document.createElement('div'); ds.className='card-desc'; ds.textContent=def.desc;
-    const ll=document.createElement('div');
-    if(lv===0){ ll.className='card-new'; ll.textContent='[ NEW ]'; } else { ll.className='card-level'; ll.innerHTML=`LV <span>${lv} → ${lv+1}</span>`; }
-    card.append(ic,nm,ds,ll);
-    card.addEventListener('click',()=>selectUpgrade(id));
-    c.appendChild(card);
+function syncModeBtn(){
+  let label;
+  if(modeAuto){
+    const p=perspectiveFromProgress();
+    const pct=Math.round(p*100);
+    label = pct <= 2 ? 'FLAT' : `TILT ${pct}%`;
+  } else {
+    label = renderMode.toUpperCase();
   }
-  document.getElementById('upgradeScreen').classList.remove('hidden');
+  document.getElementById('modeBtn').textContent = `[V] ${label}`;
 }
-function hideUpgradeScreen(){ document.getElementById('upgradeScreen').classList.add('hidden'); }
-function selectUpgrade(id){
-  const def=UPGRADE_DEFS[id];
-  upgradeLevels[id]=(upgradeLevels[id]||0)+1;
-  def.apply(); soundUpgrade();
-  pendingLevelUps--;
-  if(pendingLevelUps>0){ showUpgradeScreen(); } else { hideUpgradeScreen(); gameState='playing'; }
-  updateUI(); updateXPBar();
-}
-
-// ═══════════════════════════════════════════════════════
-//  MODE TOGGLE
-// ═══════════════════════════════════════════════════════
 function toggleMode(){
-  renderMode = (renderMode==='3d') ? '2d' : '3d';
-  document.getElementById('modeBtn').textContent = `[V] ${renderMode.toUpperCase()}`;
+  if(modeAuto){
+    modeAuto=false;
+    renderMode='2d';
+  } else if(renderMode==='2d'){
+    renderMode='3d';
+  } else {
+    modeAuto=true;
+    renderMode='2d';
+  }
+  syncModeBtn();
   const f=document.getElementById('modeFlash');
-  f.textContent = renderMode==='3d' ? '◆ 3D PERSPECTIVE' : '■ 2D FLAT';
+  f.textContent = modeAuto
+    ? '◇ AUTO TILT'
+    : (renderMode==='3d' ? '◆ 3D LOCK' : '■ 2D LOCK');
   f.style.transition='none'; f.style.opacity='1';
   setTimeout(()=>{ f.style.transition='opacity 0.6s'; f.style.opacity='0'; }, 700);
 }
 document.getElementById('modeBtn').addEventListener('click',toggleMode);
+
+// ═══════════════════════════════════════════════════════
+//  DEBUG AUTOPILOT — [A] toggles ON/OFF
+// ═══════════════════════════════════════════════════════
+let debugAutopilot = false;
+
+function syncAutoBtn(){
+  const btn=document.getElementById('autoBtn');
+  if(!btn) return;
+  btn.textContent = debugAutopilot ? '[A] AUTO ON' : '[A] AUTO';
+  btn.classList.toggle('on', debugAutopilot);
+}
+function toggleAutopilot(){
+  debugAutopilot = !debugAutopilot;
+  syncAutoBtn();
+  const f=document.getElementById('modeFlash');
+  f.textContent = debugAutopilot ? '▶ AUTOPILOT ON' : '■ AUTOPILOT OFF';
+  f.style.color = debugAutopilot ? '#ffcc00' : '#00ffcc';
+  f.style.textShadow = debugAutopilot ? '0 0 8px #ffcc00' : '0 0 8px #00ffcc';
+  f.style.transition='none'; f.style.opacity='1';
+  setTimeout(()=>{ f.style.transition='opacity 0.6s'; f.style.opacity='0'; }, 700);
+}
+
+/** Aim portal at the most urgent star / falling ball. */
+function runDebugAutopilot(){
+  let targetX=null, best=-Infinity;
+  const padCx=padX+PAD_W/2;
+
+  for(let i=0;i<fallParticles.length;i++){
+    const fp=fallParticles[i];
+    const distY=PAD_Y-fp.y;
+    if(distY < -20) continue;
+    const fall=Math.max(0.35, fp.vy);
+    const eta=Math.max(0.5, distY/fall);
+    // Prefer low stars that will miss without a move
+    const miss=Math.abs(fp.x-padCx)-PAD_W*0.45;
+    const urgency=(fp.y/PAD_Y)*4 + (1/eta)*3 + Math.max(0,miss)*0.02 + (fp.y>PAD_Y-140?2.5:0);
+    if(urgency>best){ best=urgency; targetX=fp.x; }
+  }
+
+  for(let i=0;i<balls.length;i++){
+    const b=balls[i];
+    if(b.vy<=0 || b.y<PAD_Y*0.4) continue;
+    const eta=Math.max(0.4, (PAD_Y-b.y)/Math.max(0.5,b.vy));
+    let px=b.x+b.vx*eta;
+    // Rough wall reflections over the travel
+    const span=W-2;
+    if(span>1){
+      const period=span*2;
+      let m=((px-1)%period+period)%period;
+      px = m>span ? period-m+1 : m+1;
+    }
+    const miss=Math.abs(px-padCx)-PAD_W*0.4;
+    const urgency=3+(b.y/PAD_Y)*3+(1/eta)*2+Math.max(0,miss)*0.015+(b.y>PAD_Y-110?3:0);
+    if(urgency>best){ best=urgency; targetX=px; }
+  }
+
+  if(targetX==null) return;
+  const dest=Math.max(0, Math.min(W-PAD_W, targetX-PAD_W/2));
+  padX += (dest-padX)*0.42;
+  padX = Math.max(0, Math.min(W-PAD_W, padX));
+}
+document.getElementById('autoBtn').addEventListener('click',toggleAutopilot);
 
 // ═══════════════════════════════════════════════════════
 //  INPUT (CSS-scaled canvas → logical W/H)
@@ -881,17 +1811,15 @@ canvas.addEventListener(
 canvas.addEventListener('click', () => {
   initAudio();
   if (gameState === 'start' || gameState === 'over') startGame();
-  else if (gameState === 'stageclear') nextStage();
 });
 canvas.addEventListener(
   'touchend',
   (e) => {
-    // Tap to start / advance (ignore if it was a long drag)
+    // Tap to start / retry (ignore if it was a long drag)
     if (gameState === 'playing') return;
     e.preventDefault();
     initAudio();
     if (gameState === 'start' || gameState === 'over') startGame();
-    else if (gameState === 'stageclear') nextStage();
   },
   { passive: false },
 );
@@ -901,11 +1829,14 @@ document.addEventListener('keydown', (e) => {
     toggleMode();
     return;
   }
+  if (e.key === 'a' || e.key === 'A') {
+    toggleAutopilot();
+    return;
+  }
   if (e.key === ' ' || e.key === 'Enter') {
     if (gameState === 'start' || gameState === 'over') startGame();
-    else if (gameState === 'stageclear') nextStage();
   }
-  if (gameState === 'playing') {
+  if (gameState === 'playing' && !debugAutopilot) {
     if (e.key === 'ArrowLeft') padX = Math.max(0, padX - 12);
     if (e.key === 'ArrowRight') padX = Math.min(W - PAD_W, padX + 12);
   }
@@ -920,7 +1851,7 @@ function initAudio(){
   audioCtx=new (window.AudioContext||window.webkitAudioContext)();
   masterGain=audioCtx.createGain(); masterGain.gain.value=0.38; masterGain.connect(audioCtx.destination);
   reverbNode=audioCtx.createConvolver();
-  const rate=audioCtx.sampleRate,len=rate*3.0,imp=audioCtx.createBuffer(2,len,rate);
+  const rate=audioCtx.sampleRate,len=rate*1.2,imp=audioCtx.createBuffer(2,len,rate);
   for(let c=0;c<2;c++){ const ch=imp.getChannelData(c); for(let i=0;i<len;i++) ch[i]=(Math.random()*2-1)*Math.pow(1-i/len,2.2); }
   reverbNode.buffer=imp;
   const rg=audioCtx.createGain(); rg.gain.value=0.5; reverbNode.connect(rg); rg.connect(masterGain);
@@ -948,9 +1879,11 @@ function soundBlock(x){ _pbX=x; }
 function flushBlockSound(){ if(_pbX<0) return; const n=performance.now(); if(n-_lbS<45) return; _lbS=n; const idx=Math.floor((_pbX/W)*(PENTA.length-1)); chime(PENTA[idx],1.4,0.07,true); _pbX=-1; }
 let _lwS=0; function soundWall(){ const n=performance.now(); if(n-_lwS<80) return; _lwS=n; chime(1800,0.18,0.025); }
 let _lpS=0; function soundPaddle(){ const n=performance.now(); if(n-_lpS<60) return; _lpS=n; softThud(160,0.35,0.12); chime(520,0.5,0.04); }
+let _lShot=0; function soundShot(){ const n=performance.now(); if(n-_lShot<40) return; _lShot=n; chime(880,0.07,0.035); chime(1320,0.05,0.02); }
 let _lsS=0; function soundSpawn(r,g,b){ const n=performance.now(); if(n-_lsS<80) return; _lsS=n; const hue=Math.atan2(g-b,r-g)/(2*Math.PI)+0.5; const base=PENTA[Math.floor(hue*PENTA.length)]; chime(base,0.9,0.09,true); setTimeout(()=>chime(base*1.5,0.7,0.06,true),90); }
 function soundClear(){ if(!audioCtx) return; const ns=[523.3,659.3,784.0,1046.5,1318.5]; ns.forEach((f,i)=>setTimeout(()=>chime(f,1.8,0.13,true),i*140)); setTimeout(()=>chime(2093,2.5,0.15,true),ns.length*140); }
 function soundGameOver(){ if(!audioCtx) return; [440,392,329.6,261.6,220].forEach((f,i)=>setTimeout(()=>chime(f,1.2,0.09),i*200)); }
+function soundGameOverHit(){ if(!audioCtx) return; softThud(90,0.4,0.14); chime(220,0.35,0.08); }
 function soundUpgrade(){ if(!audioCtx) return; [523.3,784.0,1046.5].forEach((f,i)=>setTimeout(()=>chime(f,1.2,0.12,true),i*70)); }
 function soundChain(){ if(!audioCtx) return; [880,1108,1318].forEach((f,i)=>setTimeout(()=>chime(f,0.8,0.1,true),i*40)); }
 
@@ -960,16 +1893,19 @@ function soundChain(){ if(!audioCtx) return; [880,1108,1318].forEach((f,i)=>setT
 function loop(){ update(); draw(); requestAnimationFrame(loop); }
 
 resetUpgrades();
-stage=1; initStage(); balls=[];
-document.getElementById('modeBtn').textContent='[V] 3D';
+generateVisitPalette();
+wave=1; blocksBroken=0; spawnBoss(); balls=[]; fallParticles=[]; shots=[]; shotCd=0; fireBoost=0;
+modeAuto=true; renderMode='2d';
+syncModeBtn();
 const startHint = window.matchMedia('(pointer: coarse)').matches
   ? 'TAP TO START'
   : 'SPACE / CLICK TO START';
 const startDesc = window.matchMedia('(pointer: coarse)').matches
-  ? 'BREAK BLOCKS → XP → LEVEL UP → UPGRADE\nDRAG TO MOVE PADDLE · TAP MODE BUTTON FOR 2D/3D'
-  : 'BREAK BLOCKS → XP → LEVEL UP → UPGRADE\n16 STAGES · 4 WORLDS · ENDLESS\n[V] TOGGLE 2D / 3D VIEW';
-showOverlay('PARTICLE\nBREAKER 3D','#00ffcc', startDesc, startHint, '');
-updateXPBar();
+  ? 'AUTO-FIRE · CATCH STARS · 3 LIVES\nBOSS REACHES YOU = OVER'
+  : 'AUTO-FIRE AT THE INVADER · 3 LIVES\nMISS A STAR OR LET THE BOSS DESCEND = DAMAGE\n[V] TILT  ·  [A] DEBUG AUTOPILOT';
+showOverlay('VOID\nBREAKER', accentCss(), startDesc, startHint, '');
+updateUI(); updateUpgradeBadges(); updateXPBar();
+syncAutoBtn();
 loop();
 </script>
 </body>

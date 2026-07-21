@@ -10,6 +10,7 @@
   --note-deep: #00856b;
   --line: color-mix(in srgb, var(--ink) 10%, transparent);
   --font-display: var(--font-shippori), 'Hiragino Mincho ProN', serif;
+  --font-loose: var(--font-yomogi), 'Hiragino Maru Gothic ProN', cursive;
   /* Void glyph / prose — concrete CJK fallbacks (Mac / Win / Linux). */
   --font-prose: var(--font-glyph), var(--font-shippori), 'Hiragino Mincho ProN',
     'Hiragino Mincho Pro', 'Yu Mincho', YuMincho, 'Noto Serif CJK JP',

@@ -1,0 +1,40 @@
+.shell {
+  min-height: 100dvh;
+  min-height: 100svh;
+  background: #05080c;
+  /* Keep LAB link above the full-bleed iframe on iOS */
+  isolation: isolate;
+}
+
+.back {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  z-index: 40;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: #5ed2b4;
+  text-decoration: none;
+  border: 1px solid rgba(94, 210, 180, 0.45);
+  background: rgba(7, 16, 22, 0.9);
+  padding: 10px 14px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  font-family: system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.back:hover,
+.back:active {
+  background: #5ed2b4;
+  color: #071018;
+}
+
+@media (max-width: 640px) {
+  .back {
+    top: max(10px, env(safe-area-inset-top));
+    left: max(10px, env(safe-area-inset-left));
+  }
+}

@@ -1,0 +1,107 @@
+.mark {
+  pointer-events: none;
+  position: absolute;
+  top: max(1.6rem, calc(0.7rem + 2.2vw));
+  left: max(1.6rem, calc(0.7rem + 2.2vw));
+  z-index: 30;
+  user-select: none;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+@media (min-width: 640px) {
+  .mark {
+    top: 2.5rem;
+    left: 2.5rem;
+  }
+}
+
+.row {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .row {
+    gap: 0.625rem;
+  }
+}
+
+.sil {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.7rem;
+  margin-bottom: 0.125rem;
+  background-color: currentColor;
+  mask-image: url(/images/shimeji-silhouette.png);
+  -webkit-mask-image: url(/images/shimeji-silhouette.png);
+  mask-size: contain;
+  -webkit-mask-size: contain;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: center bottom;
+  -webkit-mask-position: center bottom;
+}
+
+@media (min-width: 640px) {
+  .sil {
+    width: 1.45rem;
+    height: 1.95rem;
+  }
+}
+
+.label {
+  margin: 0;
+  font-family: var(--font-yomogi), cursive;
+  font-size: 17px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+}
+
+@media (min-width: 640px) {
+  .label {
+    font-size: 20px;
+  }
+}
+
+/* 「の」 matches body text until sky palette is ready (avoids hydration mismatch). */
+.no {
+  display: inline-block;
+  margin-inline: 0.02em;
+}
+
+/* After mount: iridescence from the visit's sky palette (set inline). */
+.noLit {
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  opacity: 0.92;
+  animation: brand-no-iridesce 7s ease-in-out infinite;
+}
+
+@keyframes brand-no-iridesce {
+  0%,
+  100% {
+    background-position: 0% 50%;
+    filter: saturate(0.8) brightness(0.92);
+  }
+  40% {
+    background-position: 75% 50%;
+    filter: saturate(1.3) brightness(1.15);
+  }
+  70% {
+    background-position: 100% 50%;
+    filter: saturate(1.05) brightness(1.02);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .noLit {
+    animation: none;
+    background-position: 40% 50%;
+  }
+}

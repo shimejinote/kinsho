@@ -14,6 +14,7 @@ import { beginVoidGenesis } from './voidGenesis';
 import WarpCamera from './WarpCamera';
 import WarpVignette from './WarpVignette';
 import WarpWind from './WarpWind';
+import SporeDiveFx from './SporeDiveFx';
 import styles from './VoidSpace.module.css';
 
 /**
@@ -82,6 +83,7 @@ export default function QuantumScene() {
           <WarpWind />
           <ClockworkPortal />
           <NucleusAura />
+          <SporeDiveFx />
           <WarpVignette />
           <DimensionalRift />
           <CrossingFlash />

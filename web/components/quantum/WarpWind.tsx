@@ -20,7 +20,7 @@ void main() {
 `;
 
 /**
- * Radial wind-cut streaks from the portal rim — like shearing air while warping in.
+ * Spiral wind streaks into the portal — shearing air as light bends toward the hole.
  */
 const frag = /* glsl */ `
 precision highp float;
@@ -50,46 +50,47 @@ void main() {
   float speed = 2.2 + warp * 14.0;
   float rush = uTime * speed;
 
-  // Many radial slashes — thin blades cutting air outward
+  // Log-spiral blades — curved infall paths (light bent inward)
   float blades = 0.0;
   for (int i = 0; i < 7; i++) {
     float fi = float(i);
     float slot = hash(fi * 19.1 + 2.7);
     float count = 9.0 + floor(slot * 7.0);
     float phase = hash(fi * 7.3) * 6.28318;
-    float spin = ang * count + phase - rush * (0.55 + slot * 1.4);
+    float curl = log(max(r, 0.06)) * (2.4 + slot * 1.8);
+    float spin = ang * count + phase + curl - rush * (0.55 + slot * 1.4);
     float spoke = pow(0.5 + 0.5 * sin(spin), 48.0 + warp * 40.0);
 
-    // Length varies; brighter near rim (leading edge of the cut)
-    float along = smoothstep(rim, rim + 0.08, r) * (1.0 - smoothstep(0.35, 0.85, r));
+    // Brighter nearer the rim (matter accelerating into the hole)
+    float along = smoothstep(rim * 0.9, rim * 1.25, r) * (1.0 - smoothstep(0.28, 0.72, r));
     float len = along * (0.55 + 0.45 * hash(fi * 3.1 + floor(rush * 0.15 + slot * 8.0)));
     blades += spoke * len * (0.55 + slot);
   }
   blades = clamp(blades, 0.0, 2.2);
 
-  // Shear ribbons — slightly curved streaks (wind peeling off the rim)
+  // Shear ribbons — frame-dragging curves toward the horizon
   float shear = 0.0;
   for (int j = 0; j < 4; j++) {
     float fj = float(j);
     float off = hash(fj * 11.9) * 6.28318;
-    float curl = ang + log(max(r, 0.08)) * (1.2 + fj * 0.35) - rush * (0.8 + fj * 0.25) + off;
+    float curl = ang - log(max(r, 0.08)) * (1.6 + fj * 0.4) - rush * (0.8 + fj * 0.25) + off;
     float rib = pow(0.5 + 0.5 * sin(curl * (14.0 + fj * 3.0)), 22.0);
-    float fade = smoothstep(rim, 0.22, r) * (1.0 - smoothstep(0.4, 0.9, r));
+    float fade = smoothstep(rim, 0.22, r) * (1.0 - smoothstep(0.35, 0.85, r));
     shear += rib * fade * (0.4 + 0.2 * fj);
   }
 
-  // Expanding shock rings — discrete wind fronts
+  // Contracting shock rings — horizons collapsing inward
   float rings = 0.0;
   for (int k = 0; k < 3; k++) {
     float fk = float(k);
     float pulse = fract(rush * (0.08 + fk * 0.02) + hash(fk * 5.5));
-    float rr = mix(rim * 1.05, 0.92, pow(pulse, 0.7));
+    float rr = mix(0.88, rim * 1.05, pow(pulse, 0.7));
     float ring = exp(-pow((r - rr) * mix(55.0, 28.0, pulse), 2.0));
     ring *= 1.0 - pulse;
     rings += ring * (0.7 - fk * 0.15);
   }
 
-  float wind = blades * 1.15 + shear * 0.55 + rings * 1.35;
+  float wind = blades * 1.15 + shear * 0.7 + rings * 1.2;
   wind *= band * warp;
 
   // Cool air / rift tint

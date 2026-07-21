@@ -7,6 +7,7 @@
  * Crossing curves come from `getWarpDivePattern()` (random dive per ritual).
  */
 
+import { getMushroomField } from './glyphStarsMode';
 import {
   getWarpDivePattern,
   pickRandomWarpDive,
@@ -388,8 +389,11 @@ export function tickSuction(dt: number): SuctionFrame {
   } else if (phase === 'sucking') {
     const pat = getWarpDivePattern();
     const target = driving ? 1 : 0;
-    // Slow dimensional warp: long ease-in, pattern suckSpeed scales commit rate
-    const haste = (1 + Math.min(cycle, 5) * 0.02) * pat.suckSpeed;
+    // Slow dimensional warp: long ease-in, pattern suckSpeed scales commit rate.
+    // Mushroom field needs a longer spiral — fast suck piles into a white blob.
+    const mushSlow = getMushroomField() ? 0.42 : 1;
+    const haste =
+      (1 + Math.min(cycle, 5) * 0.02) * pat.suckSpeed * mushSlow;
     const base = driving ? Math.pow(0.996, haste) : 0.96;
     const alpha = 1 - Math.pow(base, d * 60);
     const easeIn = driving

@@ -15,19 +15,20 @@ export const APPS: AppEntry[] = [
   {
     id: '01',
     href: '/breakout/',
-    name: 'PARTICLE BREAKER',
-    blurb: 'レトロな粒子ブレイクアウト。パドルで遊べ。',
+    name: 'VOID BREAKER',
+    blurb: '自機が自動射撃。星を逃すかボス接近でミス。',
     status: 'LIVE',
     accent: '#00ffcc',
     thumb: '/breakout/thumb.png',
   },
   {
     id: '02',
-    href: '/sample-app/',
-    name: 'SAMPLE SIGNAL',
-    blurb: '共有 API へつなぐ実験端末',
+    href: '/noumai/',
+    name: 'BRAIN MAKER',
+    blurb: '頭部内で Allen 脳をアセンブルする草案端末。',
     status: 'LIVE',
-    accent: '#5fd6ff',
+    accent: '#5ed2b4',
+    thumb: '/noumai/thumb.png',
   },
   {
     id: '03',
@@ -60,11 +61,6 @@ export const NAV_ITEMS: NavItem[] = [
   { id: 'archives', label: 'アーカイブ', hint: '保存済み' },
   { id: 'signal', label: '稼働中', hint: 'LIVE のみ' },
 ];
-
-export const LAB_META = {
-  site: 'KINSHO LAB',
-  tagline: '接続先を選ぶ',
-} as const;
 
 /** Rotating everyday tips — shown in the status rail. */
 export const LIFE_TIPS = [
