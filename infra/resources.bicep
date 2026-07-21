@@ -101,6 +101,16 @@ module staticWebApp 'modules/staticWebApp.bicep' = {
   }
 }
 
+module mediaStorage 'modules/mediaStorage.bicep' = {
+  name: 'mediaStorage'
+  params: {
+    location: location
+    nameSuffix: nameSuffix
+    tags: tags
+    storageAccountName: take('stkmedia${nameSuffix}', 24)
+  }
+}
+
 module budget 'modules/budget.bicep' = {
   name: 'budget'
   params: {
@@ -116,3 +126,6 @@ output functionAppName string = functionApp.?outputs.functionAppName ?? ''
 output functionAppHostname string = functionApp.?outputs.functionAppDefaultHostname ?? ''
 output applicationInsightsId string = monitoring.outputs.applicationInsightsId
 output budgetName string = budget.outputs.budgetName
+output mediaStorageAccountName string = mediaStorage.outputs.storageAccountName
+output mediaBlobBaseUrl string = mediaStorage.outputs.blobBaseUrl
+output mediaNoumaiBrainUrl string = mediaStorage.outputs.mediaNoumaiBrainUrl

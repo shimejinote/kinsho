@@ -31,3 +31,7 @@ npm-debug.log*
 
 # TypeScript
 *.tsbuildinfo
+
+# Large binary media — hosted on Azure Blob (see scripts/sync-media-to-blob.ps1)
+web/public/assets/noumai-maker/*.glb
+web/public/assets/**/*.glb

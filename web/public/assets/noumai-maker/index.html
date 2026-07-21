@@ -654,6 +654,7 @@
     }
   }
   </script>
+  <script src="./media-config.js"></script>
   <script type="module">
     import * as THREE from "three";
     import { OrbitControls } from "three/addons/controls/OrbitControls.js";
@@ -3303,8 +3304,12 @@
     const loader = new GLTFLoader();
     setStatus("Loading", "loading");
 
+    const brainUrl =
+      (window.KINSHO_MEDIA && window.KINSHO_MEDIA.noumaiBrain) ||
+      "./head_allen_fit.glb";
+
     loader.load(
-      "./head_allen_fit.glb",
+      brainUrl,
       (gltf) => {
         modelRoot = gltf.scene;
         scene.add(modelRoot);
